@@ -3,6 +3,8 @@ on:
   schedule:
     - cron: '17 6 * * *'
       timezone: Europe/Copenhagen
+    - cron: '17 7 * * *'
+      timezone: Europe/Copenhagen
   workflow_dispatch:
     inputs:
       first_publish:
@@ -20,38 +22,59 @@ concurrency:
 jobs:
   opdater:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
+    outputs:
+      publish: ${{ steps.previous.outputs.publish }}
+      receipt: ${{ steps.collect.outputs.receipt }}
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - name: Kontrollér hvilket overblik der faktisk er offentligt
+        id: previous
+        env:
+          EVENT: ${{ github.event_name }}
+          FIRST_PUBLISH: ${{ inputs.first_publish }}
+          PUBLISHED_URL: https://jacobagger-lab.github.io/michaels-boligblik/boliger.json
+        run: |
+          status=$(curl -sSL --retry 3 --retry-all-errors --max-time 30 \
+            --output "$RUNNER_TEMP/previous.json" --write-out '%{http_code}' \
+            "$PUBLISHED_URL?run=$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT")
+          case "$status" in
+            200) if [[ "$EVENT" == schedule ]] && python3 scripts/morning.py current "$RUNNER_TEMP/previous.json"; then
+                   echo "Alle kilder er allerede hentet i morges"; echo "publish=false" >> "$GITHUB_OUTPUT"; exit 0
+                 fi ;;
+            404) if [[ "$FIRST_PUBLISH" != true ]]; then echo "::error::Sidste boligoversigt mangler"; exit 1; fi
+                 rm "$RUNNER_TEMP/previous.json" ;;
+            *)   echo "::error::Kunne ikke hente sidste overblik (HTTP $status)"; exit 1 ;;
+          esac
+          echo "publish=true" >> "$GITHUB_OUTPUT"
       - name: Genbrug kontrollerede placeringer uden for søgeområdet
+        if: steps.previous.outputs.publish == 'true'
         uses: actions/cache@v6
         with:
           path: ${{ runner.temp }}/bolig-geo
           key: bolig-geo-${{ hashFiles('scripts/geo.py') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: bolig-geo-${{ hashFiles('scripts/geo.py') }}-
-      - name: Hent sidste offentliggjorte overblik
+      - name: Kontrollér historik, og hent villaer fra mæglerne
+        if: steps.previous.outputs.publish == 'true'
+        id: collect
         env:
           BOLIG_GEO_CACHE: ${{ runner.temp }}/bolig-geo
-          FIRST_PUBLISH: ${{ inputs.first_publish }}
-          PUBLISHED_URL: https://jacobagger-lab.github.io/michaels-boligblik/boliger.json
         run: |
-          status=$(curl --silent --show-error --location --retry 3 --retry-all-errors \
-            --max-time 25 --output "$RUNNER_TEMP/previous.json" --write-out '%{http_code}' \
-            "$PUBLISHED_URL?run=$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT")
-          case "$status" in
-            200) python3 scripts/refresh.py --previous "$RUNNER_TEMP/previous.json" --output public/boliger.json ;;
-            404) if [[ "$FIRST_PUBLISH" != true ]]; then echo "::error::Sidste boligoversigt mangler"; exit 1; fi
-                 python3 scripts/refresh.py --output public/boliger.json ;;
-            *)   echo "::error::Kunne ikke hente sidste overblik (HTTP $status)"; exit 1 ;;
-          esac
+          python3 -m unittest discover -s scripts -p 'test_*.py'
+          prior=()
+          if [[ -f "$RUNNER_TEMP/previous.json" ]]; then prior=(--previous "$RUNNER_TEMP/previous.json"); fi
+          python3 scripts/refresh.py "${prior[@]}" --output public/boliger.json
+          echo "receipt=$(python3 scripts/morning.py receipt public/boliger.json)" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-pages-artifact@v5
+        if: steps.previous.outputs.publish == 'true'
         with:
           path: public
           retention-days: 1
   udgiv:
     needs: opdater
+    if: needs.opdater.outputs.publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 8
     permissions:
@@ -64,3 +87,34 @@ jobs:
       - name: Udgiv det kontrollerede overblik
         id: deployment
         uses: actions/deploy-pages@v5
+  drift:
+    needs: [opdater, udgiv]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - name: Gem kildestatus og antal boliger for den offentliggjorte opdatering
+        env:
+          RECEIPT: ${{ needs.opdater.outputs.receipt }}
+        run: |
+          mkdir -p drift
+          python3 -c 'import json,os; print(json.dumps(json.loads(os.environ["RECEIPT"]),ensure_ascii=False,indent=2))' > drift/seneste.json
+          git add drift/seneste.json
+          if ! git diff --cached --quiet; then
+            git -c user.name='Michaels boligblik' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m "Opdatér driftstal for Michaels boligblik"
+            git push origin HEAD:main
+          fi
+      - name: Markér en ufuldstændig reservekørsel
+        if: github.event.schedule == '17 7 * * *'
+        env:
+          RECEIPT: ${{ needs.opdater.outputs.receipt }}
+        run: |
+          python3 - <<'PYTHON'
+          import json,os,sys
+          failed = [name for name, info in json.loads(os.environ["RECEIPT"])["sources"].items() if info["status"] != "ok"]
+          if failed:
+              sys.exit("Forsinkede mæglere efter andet forsøg: " + ", ".join(failed))
+          PYTHON

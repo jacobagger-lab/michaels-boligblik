@@ -78,8 +78,12 @@ function restoreCriteria() {
 const brokerHosts = {
   Nybolig: ['nybolig.dk', 'www.nybolig.dk'],
   home: ['home.dk'], danbolig: ['danbolig.dk'], LokalBolig: ['www.lokalbolig.dk'],
+  Nordkystmæglerne: ['nordkystmaeglerne.dk'], Estate: ['www.estate.dk'], 'Ivan Eltoft Nielsen': ['eltoftnielsen.dk'],
+  '&LIVING': ['andliving.dk'], LILIENHOFF: ['www.lilienhoff.dk'],
 };
-const previewHosts = {home: 'home.mindworking.eu', danbolig: 'danbolig.mindworking.eu', LokalBolig: 'lokalbolig.io'};
+const previewHosts = {home: 'home.mindworking.eu', danbolig: 'danbolig.mindworking.eu', LokalBolig: 'lokalbolig.io',
+  Nordkystmæglerne:'mediaserver.prod.realequity.dk', Estate:'estate.mindworking.eu', 'Ivan Eltoft Nielsen':'eltoftnielsen.dk',
+  '&LIVING':'andliving.mindworking.eu', LILIENHOFF:'lilienhoff.mindworking.eu'};
 
 function sourceLink(value, source) {
   if (!value) return null;
@@ -202,6 +206,10 @@ function renderHome(home, today, index) {
   addPhoto(card, home, index);
   const town = [home.postalCode, home.city].filter(Boolean).join(' ');
   card.querySelector('.town').textContent = town + ' · ' + home.distanceKm.toLocaleString('da-DK', {maximumFractionDigits:1}) + ' km · ' + home.source;
+  const last = data.sources?.[home.source];
+  if (last?.status === 'delayed' && last.updatedAt) {
+    card.querySelector('.town').textContent += ' · Sidst set ' + updatedFormat.format(new Date(last.updatedAt));
+  }
   const suffix = ', ' + town;
   const street = town && home.address.endsWith(suffix) ? home.address.slice(0, -suffix.length) : home.address;
   card.querySelector('h3').textContent = street || 'Adresse ikke oplyst';
@@ -282,7 +290,7 @@ function render(append = false) {
 
 async function load() {
   try {
-    const response = await fetch('./boliger.json', {cache:'no-store'});
+    const response = await fetch('./boliger.json?format=lokal9', {cache:'no-store'});
     if (!response.ok) throw Error('Fetch failed');
     const result = await response.json();
     const timestamp = Date.parse(result.updatedAt);
@@ -318,7 +326,10 @@ async function load() {
     }
     data = {...result, listings:[...unique.values()]};
     document.querySelector('#freshness').textContent = 'Opdateret ' + updatedFormat.format(new Date(timestamp));
-    if (Date.now() - timestamp > 30 * 3600000) {
+    const now = new Date();
+    const localTime = new Intl.DateTimeFormat('en-GB', {timeZone:'Europe/Copenhagen', hour:'2-digit', minute:'2-digit', hourCycle:'h23'}).format(now);
+    const previousDay = dayFormat.format(new Date(timestamp)) < dayFormat.format(now);
+    if ((previousDay && localTime >= '07:45') || Date.now() - timestamp > 30 * 3600000) {
       const warning = document.querySelector('#warning');
       warning.hidden = false;
       warning.textContent = 'Opdateringen er forsinket. Listen viser senest hentede boliger og priser.';

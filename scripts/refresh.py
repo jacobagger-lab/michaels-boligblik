@@ -16,6 +16,7 @@ from xml.etree.ElementTree import ParseError
 from zoneinfo import ZoneInfo
 
 from concurrent.futures import ThreadPoolExecutor
+from extra_sources import MORE_SOURCES
 from geo import LAT, LON, RADIUS_KM, SCOPE, geo_fields
 from brokers import Page, fetch, public_photo, danbolig_listings, home_listings, lokalbolig_listings
 
@@ -146,7 +147,7 @@ def current_listings():
 
 
 SOURCES = {"Nybolig": current_listings, "home": home_listings,
-           "danbolig": danbolig_listings, "LokalBolig": lokalbolig_listings}
+           "danbolig": danbolig_listings, "LokalBolig": lokalbolig_listings, **MORE_SOURCES}
 
 
 def address_key(row):
@@ -188,7 +189,7 @@ def build_snapshot(previous, now, sources=None):
         prior = prior_sources.get(name, {})
         try:
             fresh = future.result()
-            if not fresh or len({r["id"] for r in fresh}) != len(fresh):
+            if (not fresh and name != "Nordkystmæglerne") or len({r["id"] for r in fresh}) != len(fresh):
                 raise ValueError("Empty or duplicated source results.")
             for row in fresh:
                 row["source"] = name
