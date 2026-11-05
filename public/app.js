@@ -4,7 +4,8 @@ const criteriaForm = document.querySelector('#filters');
 const criteriaKeys = ['priceMin', 'priceMax', 'areaMin', 'numberOfRoomsMin'];
 const storageKey = 'boligblik.filters.v1';
 const visitKey = 'boligblik.visits.v1';
-const viewNames = {all: 'Alle villaer', new: 'Nye siden dit sidste besøg'};
+const savedKey = 'boligblik.saved.v1';
+const viewNames = {all: 'Alle villaer', new: 'Nye siden dit sidste besøg', saved: 'Gemte villaer'};
 const currency = new Intl.NumberFormat('da-DK', {maximumFractionDigits: 0});
 const updatedFormat = new Intl.DateTimeFormat('da-DK', {
   timeZone: 'Europe/Copenhagen', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
@@ -20,6 +21,16 @@ let view = 'all';
 const pageSize = 24;
 let shown = pageSize;
 let criteria = {};
+let saved = new Set();
+let savedInTabOnly = false;
+let searchWords = [];
+
+function readSaved() {
+  try {
+    const keys = JSON.parse(localStorage.getItem(savedKey) || '[]');
+    if (Array.isArray(keys)) saved = new Set(keys.filter(key => typeof key === 'string'));
+  } catch { /* Keep bookmarks available in this tab when storage is blocked. */ }
+}
 
 function compareVisit(timestamp, addresses) {
   let previous = visit;
@@ -38,7 +49,8 @@ function meetsCriteria(home) {
   const {priceMin, priceMax} = criteria;
   const inBudget = (!priceMin && !priceMax) || (Number.isFinite(home.price) &&
     (!priceMin || home.price >= priceMin) && (!priceMax || home.price <= priceMax));
-  return inBudget &&
+  const address = [home.address, home.city, home.postalCode].join(' ').toLocaleLowerCase('da');
+  return inBudget && searchWords.every(word => address.includes(word)) &&
     (!criteria.areaMin || home.area >= criteria.areaMin) &&
     (!criteria.numberOfRoomsMin || home.rooms >= criteria.numberOfRoomsMin);
 }
@@ -146,7 +158,7 @@ function showPhoto(home, cardImage, fullUrl) {
 }
 
 const cardWidths = [360, 480, 640, 768, 900, 1080, 1440, 1920];
-const cardSizes = '(max-width: 350px) calc(100vw - 24px), (max-width: 690px) calc(100vw - 32px), (max-width: 1168px) calc((100vw - 70px) / 2), 549px';
+const cardSizes = '(max-width: 360px) calc(100vw - 24px), (max-width: 699px) calc(100vw - 36px), (max-width: 1049px) calc((100vw - 85px) / 2), (max-width: 1312px) calc((100vw - 106px) / 3), 402px';
 
 function addPhoto(card, home, index) {
   const preview = home.thumbnailUrl;
@@ -220,10 +232,17 @@ function renderHome(home, index) {
   const suffix = ', ' + town;
   const street = town && home.address.endsWith(suffix) ? home.address.slice(0, -suffix.length) : home.address;
   card.querySelector('h3').textContent = street || 'Adresse ikke oplyst';
-  const specs = ['Villa'];
-  if (home.area !== null) specs.push(currency.format(home.area) + ' m²');
-  if (home.rooms !== null) specs.push(currency.format(home.rooms) + (home.rooms === 1 ? ' værelse' : ' værelser'));
-  card.querySelector('.specs').textContent = specs.join(' · ');
+  const area = card.querySelector('.area');
+  const rooms = card.querySelector('.rooms');
+  area.hidden = home.area == null;
+  rooms.hidden = home.rooms == null;
+  if (!area.hidden) area.querySelector('span').textContent = currency.format(home.area) + ' m²';
+  if (!rooms.hidden) rooms.querySelector('span').textContent = home.rooms + ' vær.';
+  const key = home.addressKey || home.id;
+  const bookmark = card.querySelector('.bookmark');
+  bookmark.dataset.key = key;
+  bookmark.setAttribute('aria-label', 'Gem ' + home.address);
+  bookmark.setAttribute('aria-pressed', String(saved.has(key)));
   card.querySelector('.price').textContent = home.price === null ? 'Pris ikke oplyst' : currency.format(home.price) + ' kr.';
   if (newAddresses.has(home.addressKey || home.id)) {
     const chip = card.querySelector('.chip');
@@ -248,7 +267,7 @@ function render(append = false) {
   if (!data) return;
   const all = data.listings.filter(meetsCriteria);
   const fresh = all.filter(home => newAddresses.has(home.addressKey || home.id));
-  const lists = {all, new:fresh};
+  const lists = {all, new:fresh, saved:all.filter(home => saved.has(home.addressKey || home.id))};
   for (const button of document.querySelectorAll('#views button')) {
     button.setAttribute('aria-pressed', String(button.dataset.view === view));
     button.querySelector('span:last-child').textContent = lists[button.dataset.view].length;
@@ -270,11 +289,15 @@ function render(append = false) {
   more.textContent = 'Vis ' + Math.min(pageSize, Math.max(0, results.length - shown)) + ' flere villaer';
   const empty = document.querySelector('#empty');
   empty.hidden = results.length > 0;
-  if (view === 'new') empty.textContent = visit.first
+  const narrowed = searchWords.length || Object.keys(criteria).length;
+  if (view === 'saved') empty.textContent = saved.size && narrowed
+    ? 'Ingen gemte villaer matcher din søgning.'
+    : 'Gem en villa med bogmærket på billedet. Her finder du dine gemte villaer, så længe de er til salg.';
+  else if (view === 'new') empty.textContent = visit.first
     ? 'Dit første besøg er udgangspunktet. Under Alle kan du se villaerne, der er til salg nu.'
-    : (Object.keys(criteria).length ? 'Ingen nye villaer matcher dine filtre siden dit sidste besøg.'
+    : (narrowed ? 'Ingen nye villaer matcher din søgning siden dit sidste besøg.'
       : 'Ingen nye villaer siden dit sidste besøg.');
-  else empty.textContent = all.length === 0 && Object.keys(criteria).length
+  else empty.textContent = all.length === 0 && narrowed
     ? 'Ingen villaer matcher dine søgekriterier. Prøv at justere dem ovenfor.'
     : 'Ingen af de tilknyttede mæglere har aktive villaer i den seneste opdatering.';
 }
@@ -312,7 +335,7 @@ async function load() {
       li.append(time);
       list.append(li);
     }
-    document.querySelector('#coverage-open').textContent = Object.keys(sources).length + ' mæglerkilder';
+    document.querySelector('#coverage-open span').textContent = Object.keys(sources).length + ' mæglerkilder';
     // Prefer current records and direct listing links when brokers share an address.
     const rank = home => (sources[home.source]?.status === 'ok' ? 2 : 0) + Number(Boolean(sourceLink(home.url, home.source)));
     const unique = new Map();
@@ -411,9 +434,50 @@ for (const button of document.querySelectorAll('#views button')) {
     view = button.dataset.view;
     shown = pageSize;
     render();
+    const headingTop = document.querySelector('#list-title').getBoundingClientRect().top;
+    const controls = window.matchMedia('(min-width:700px)').matches ? '.browse-tools' : '#views';
+    const margin = document.querySelector(controls).offsetHeight + 14;
+    if (headingTop < margin) window.scrollBy(0, headingTop - margin);
   });
 }
+document.querySelector('#query').addEventListener('input', event => {
+  const text = event.target.value.trim().toLocaleLowerCase('da');
+  searchWords = text ? text.split(/\s+/) : [];
+  shown = pageSize;
+  render();
+});
+document.querySelector('#list').addEventListener('click', event => {
+  const button = event.target.closest('.bookmark');
+  if (!button) return;
+  const key = button.dataset.key;
+  const keep = button.getAttribute('aria-pressed') !== 'true';
+  if (!savedInTabOnly) readSaved();
+  if (keep) saved.add(key); else saved.delete(key);
+  let message = keep ? 'Villaen er gemt.' : 'Villaen er fjernet fra Gemte.';
+  try {
+    localStorage.setItem(savedKey, JSON.stringify([...saved]));
+    savedInTabOnly = false;
+  } catch {
+    savedInTabOnly = true;
+    message += ' Ændringen gælder kun i denne fane.';
+  }
+  if (view === 'saved') {
+    const index = [...document.querySelectorAll('#list .bookmark')].indexOf(button);
+    render();
+    const remaining = document.querySelectorAll('#list .bookmark');
+    (remaining[Math.min(index, remaining.length - 1)] || document.querySelector('[data-view="saved"]')).focus();
+  } else {
+    button.setAttribute('aria-pressed', String(keep));
+    document.querySelector('[data-view="saved"] span:last-child').textContent =
+      data.listings.filter(home => saved.has(home.addressKey || home.id) && meetsCriteria(home)).length;
+  }
+  document.querySelector('#save-status').textContent = message;
+});
+window.addEventListener('storage', event => {
+  if (event.key === savedKey || event.key === null) { readSaved(); render(); }
+});
 document.querySelector('#more').addEventListener('click', () => { shown += pageSize; render(true); });
+readSaved();
 restoreCriteria();
 document.addEventListener('visibilitychange', load);
 window.addEventListener('pageshow', event => { if (event.persisted) load(); });

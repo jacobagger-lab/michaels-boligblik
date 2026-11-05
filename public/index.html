@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#183e34">
+  <meta name="theme-color" content="#ffffff">
   <meta name="description" content="Se villaer til salg inden for 12 km fra Hillerød, og find dem, der er kommet til siden dit sidste besøg.">
   <meta property="og:locale" content="da_DK">
   <meta property="og:type" content="website">
@@ -18,42 +18,57 @@
   <meta name="twitter:card" content="summary_large_image">
   <title>Michaels boligblik · Hillerød</title>
   <link rel="preconnect" href="https://nybolig.mindworking.eu">
-  <link rel="stylesheet" href="./styles.css?v=prisinterval1">
-  <script src="./app.js?v=besoeg1" defer></script>
+  <link rel="preload" href="./fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./styles.css?v=mobil26">
+  <script src="./app.js?v=mobil26" defer></script>
 </head>
 <body>
   <svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <symbol id="i-house" viewBox="0 0 32 32"><path d="m3 16 13-11 13 11M7 15v12h18V15M13 27v-9h6v9"/></symbol>
     <symbol id="i-pin" viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.3"/></symbol>
+    <symbol id="i-brand" viewBox="0 0 32 32"><path d="m3 17 12-12 6 6m-11 6 11-11 9 9M7 19v7h18V16" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M6 4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21l-6-4-6 4z"/></symbol>
+    <symbol id="i-layers" viewBox="0 0 24 24"><path d="m3 8 9-5 9 5-9 5zM3 12l9 5 9-5M3 16l9 5 9-5"/></symbol>
+    <symbol id="i-area" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 12V8h4m4 4v4h-4"/></symbol>
+    <symbol id="i-room" viewBox="0 0 24 24"><path d="M4 20h16M6 20V4h12v16M9 20V7l6 1v12"/><path d="M12.5 13h.1"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M6 18 18 6M7 6h11v11"/></symbol>
     <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 7h7m5 0h6M3 17h11m5 0h2"/><circle cx="12" cy="7" r="2.4"/><circle cx="16" cy="17" r="2.4"/></symbol>
     <symbol id="i-expand" viewBox="0 0 24 24"><path d="M14 4h6v6m0-6-7 7M10 20H4v-6m0 6 7-7"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
     <symbol id="i-zoom" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.2"/><path d="m15 15 6 6"/></symbol>
   </svg>
   <header class="mast">
-    <div class="wrap mast-inner"><span class="brand"><svg class="logo icon" aria-hidden="true"><use href="#i-house"/></svg>Michaels boligblik</span>
-      <span class="location"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Hillerød · 12 km</span>
+    <div class="wrap mast-inner">
+      <span class="brand"><span class="brand-mark"><svg aria-hidden="true" viewBox="0 0 32 32"><use href="#i-brand"/></svg></span>Michaels boligblik</span>
+      <button id="coverage-open" type="button" aria-haspopup="dialog"><svg class="icon" aria-hidden="true"><use href="#i-layers"/></svg><span>Mæglerkilder</span></button>
     </div>
   </header>
   <main class="wrap">
     <div class="intro">
-      <h1>Villaer til salg</h1>
-      <p class="source"><button id="coverage-open" type="button" aria-haspopup="dialog">Mæglerkilder</button><span aria-hidden="true">·</span><span id="freshness" role="status">Henter boliger …</span></p>
+      <div class="intro-copy"><p class="eyebrow">Villaer til salg</p><h1>Hillerød <span>&amp; omegn</span></h1>
+      <p class="location"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>12 km fra Hillerød centrum</p></div>
     </div>
     <p id="warning" class="warning" role="status" hidden></p>
-    <div class="toolbar">
+    <div class="browse-tools">
+      <div class="search-row">
+        <label class="search"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><span class="sr-only">Søg på vej, by eller postnummer</span><input type="search" id="query" autocomplete="off" enterkeyhint="search" placeholder="Søg vej, by eller postnr."></label>
+        <button class="filter-open" id="filter-open" type="button" aria-haspopup="dialog"><svg class="icon" aria-hidden="true"><use href="#i-filter"/></svg><span class="filter-label">Filtre</span></button>
+      </div>
       <nav id="views" class="views" aria-label="Vælg boligoversigt">
         <button type="button" data-view="all" aria-pressed="true">Alle <span>–</span></button>
         <button type="button" data-view="new" aria-pressed="false">Nye<span class="sr-only"> siden dit sidste besøg</span> <span>–</span></button>
+        <button type="button" data-view="saved" aria-pressed="false">Gemte <span>–</span></button>
       </nav>
-      <button class="filter-open" id="filter-open" type="button" aria-haspopup="dialog"><svg class="icon" aria-hidden="true"><use href="#i-filter"/></svg><span class="filter-label">Filtre</span></button>
     </div>
     <p id="filter-summary" hidden></p>
     <section aria-labelledby="list-title">
-      <div class="section-head"><h2 id="list-title">Alle villaer</h2><span id="count" role="status"></span></div>
+      <div class="section-head"><h2 id="list-title">Alle villaer</h2><span id="count" class="sr-only" role="status"></span><span class="fresh"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg><span id="freshness" role="status">Henter boliger …</span></span></div>
       <div id="list" class="grid"></div>
       <button id="more" class="filter-open" type="button" hidden>Vis flere villaer</button>
       <p id="empty" class="empty" role="status" hidden></p>
+      <p id="save-status" class="sr-only" role="status"></p>
       <p id="visit-storage" class="note" hidden>Browseren kan kun huske dette besøg, mens fanen er åben. Tillad lokal lagring for at se nye villaer mellem besøg.</p>
       <noscript><p>Aktivér JavaScript for at se boligerne og bruge filtrene.</p></noscript>
     </section>
@@ -70,8 +85,8 @@
     <form id="filters">
       <div class="fields">
         <div class="price-range">
-          <label>Min. pris i kroner<input type="number" name="priceMin" min="1" step="1" inputmode="numeric" placeholder="Ingen nedre grænse"></label>
-          <label>Maks. pris i kroner<input type="number" name="priceMax" min="1" step="1" inputmode="numeric" placeholder="Ingen øvre grænse"></label>
+          <label>Min. pris i kroner<input type="number" name="priceMin" min="1" step="1" inputmode="numeric" placeholder="Fra beløb"></label>
+          <label>Maks. pris i kroner<input type="number" name="priceMax" min="1" step="1" inputmode="numeric" placeholder="Til beløb"></label>
         </div>
         <label>Mindst m²<input type="number" name="areaMin" min="1" step="1" inputmode="numeric" placeholder="Alle størrelser"></label>
         <label>Mindst antal værelser<input type="number" name="numberOfRoomsMin" min="1" step="1" inputmode="numeric" placeholder="Alle antal"></label>
@@ -86,11 +101,13 @@
       <div class="photo">
         <span class="missing">Foto mangler</span>
         <button class="enlarge" type="button" aria-haspopup="dialog" hidden><span class="expand-icon"><svg class="icon" aria-hidden="true"><use href="#i-expand"/></svg></span></button>
+        <button class="bookmark" type="button" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-bookmark"/></svg></button>
         <span class="chip" hidden></span>
+        <strong class="price"></strong>
       </div>
       <div class="card-body">
-        <p class="town"></p><h3></h3><p class="specs"></p>
-        <div class="card-foot"><strong class="price"></strong><a class="listing-link">Se annonce <span aria-hidden="true">↗</span></a></div>
+        <h3></h3><p class="town"></p>
+        <div class="card-foot"><p class="specs"><span class="area"><svg class="icon" aria-hidden="true"><use href="#i-area"/></svg><span></span></span><span class="rooms"><svg class="icon" aria-hidden="true"><use href="#i-room"/></svg><span></span></span></p><a class="listing-link">Se annonce <svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
       </div>
     </article>
   </template>
