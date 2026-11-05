@@ -2,70 +2,86 @@
 <html lang="da">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#19392f">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#183e34">
   <meta name="description" content="Michaels daglige overblik over Nyboligs villaer i Hillerød Kommune.">
   <title>Michaels boligblik · Hillerød</title>
-  <link rel="stylesheet" href="./styles.css?v=photos1">
-  <script src="./app.js?v=photos1" defer></script>
+  <link rel="preconnect" href="https://nybolig.mindworking.eu">
+  <link rel="stylesheet" href="./styles.css?v=boligfoto2">
+  <script src="./app.js?v=boligfoto2" defer></script>
 </head>
 <body>
-  <header class="mast"><div class="wrap mast-inner">
-    <span class="brand"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M2 16 16 4l14 12M7 14v14h18V14M13 28V17h6v11" stroke="currentColor" stroke-width="2"/></svg>Michaels boligblik</span>
-    <span class="location">Hillerød Kommune</span>
-  </div></header>
-  <main>
-    <section class="hero"><div class="wrap hero-inner">
-      <div class="hero-copy">
-        <h1>Villaer til salg</h1>
-        <p>Nyboligs aktuelle villaer i Hillerød Kommune.</p>
-        <p id="freshness" class="stamp" role="status">Henter seneste opdatering …</p>
-      </div>
-      <svg class="drawing" viewBox="0 0 270 128" fill="none" aria-hidden="true">
-        <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M1 113h268M16 122h201M193 117h54M20 104l12-24 13 24m-13-17v26m7-22 14-28 16 28H57l13 12H38l8-12m8-14v36"/>
-          <path d="M62 88l55-39 44 39m-88-4v29h80V83m-68-11 32-23 44 39h63l-45-39h-62m37 64h64V88m-36-37v-17h11v23M85 98h14v15H85zm26 15V93h17v20m9-19h9v10h-9zm29 3h13v10h-13zm24 0h13v10h-13z"/>
-          <path d="M219 105l11-23 13 23h-9l9 8h-25l9-8m4-11v19M8 109q27-11 60 1m153-1q22-6 44 1"/>
-          <circle cx="228" cy="38" r="15"/>
-        </g>
-      </svg>
-    </div></section>
-    <div class="wrap">
-      <p id="warning" class="warning" role="status" hidden></p>
-      <nav id="views" class="views" aria-label="Vælg boligoversigt">
-        <button type="button" data-view="all" aria-pressed="true">Alle villaer <span>–</span></button>
-        <button type="button" data-view="new" aria-pressed="false">Nye siden i går <span>–</span></button>
-        <button type="button" data-view="drop" aria-pressed="false">Prisfald på 7 dage <span>–</span></button>
-      </nav>
-      <details class="criteria" id="filter-panel">
-        <summary><span><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M2 5h6m4 0h6M2 14h10m4 0h2M8 2v6m5 3v6" stroke="currentColor" stroke-width="1.7"/></svg>Søgekriterier</span><span id="filter-summary"></span></summary>
-        <form id="filters">
-          <div class="fields">
-            <label>Maks. pris i kr.<input type="number" name="priceMax" min="1" step="1" inputmode="numeric" placeholder="Alle priser"></label>
-            <label>Mindst m²<input type="number" name="areaMin" min="1" step="1" inputmode="numeric" placeholder="Alle størrelser"></label>
-            <label>Mindst antal værelser<input type="number" name="numberOfRoomsMin" min="1" step="1" inputmode="numeric" placeholder="Alle antal"></label>
-          </div>
-          <div class="actions"><button type="submit">Anvend</button><button type="reset">Nulstil</button><small>Gemmes på denne enhed.</small></div>
-        </form>
-      </details>
-      <section aria-labelledby="list-title">
-        <div class="section-head"><h2 id="list-title">Alle villaer</h2><span id="count" role="status"></span></div>
-        <p id="baseline" class="note" hidden></p>
-        <div id="list" class="grid"></div>
-        <p id="empty" class="empty" role="status" hidden></p>
-        <noscript><p>Aktivér JavaScript for at se boligerne og bruge filtrene.</p></noscript>
-      </section>
+  <svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-house" viewBox="0 0 32 32"><path d="m3 16 13-11 13 11M7 15v12h18V15M13 27v-9h6v9"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.3"/></symbol>
+    <symbol id="i-filter" viewBox="0 0 24 24"><path d="M3 7h7m5 0h6M3 17h11m5 0h2"/><circle cx="12" cy="7" r="2.4"/><circle cx="16" cy="17" r="2.4"/></symbol>
+    <symbol id="i-expand" viewBox="0 0 24 24"><path d="M14 4h6v6m0-6-7 7M10 20H4v-6m0 6 7-7"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-zoom" viewBox="0 0 24 24"><circle cx="10" cy="10" r="6.2"/><path d="m15 15 6 6"/></symbol>
+  </svg>
+  <header class="mast">
+    <div class="wrap mast-inner"><span class="brand"><svg class="logo icon" aria-hidden="true"><use href="#i-house"/></svg>Michaels boligblik</span>
+      <span class="location"><svg class="icon" aria-hidden="true"><use href="#i-pin"/></svg>Hillerød Kommune</span>
     </div>
+  </header>
+  <main class="wrap">
+    <div class="intro">
+      <h1>Villaer til salg</h1>
+      <p class="source"><span>Nybolig</span><span aria-hidden="true">·</span><span id="freshness" role="status">Henter boliger …</span></p>
+    </div>
+    <p id="warning" class="warning" role="status" hidden></p>
+    <div class="toolbar">
+      <nav id="views" class="views" aria-label="Vælg boligoversigt">
+        <button type="button" data-view="all" aria-pressed="true">Alle <span>–</span></button>
+        <button type="button" data-view="new" aria-pressed="false">Nye<span class="sr-only"> siden i går</span> <span>–</span></button>
+        <button type="button" data-view="drop" aria-pressed="false">Prisfald<span class="sr-only"> på 7 dage</span> <span>–</span></button>
+      </nav>
+      <button class="filter-open" id="filter-open" type="button" aria-haspopup="dialog"><svg class="icon" aria-hidden="true"><use href="#i-filter"/></svg><span class="filter-label">Filtre</span></button>
+    </div>
+    <p id="filter-summary" hidden></p>
+    <section aria-labelledby="list-title">
+      <div class="section-head"><h2 id="list-title">Alle villaer</h2><span id="count" role="status"></span></div>
+      <div id="list" class="grid"></div>
+      <p id="empty" class="empty" role="status" hidden></p>
+      <p id="baseline" class="note" hidden></p>
+      <noscript><p>Aktivér JavaScript for at se boligerne og bruge filtrene.</p></noscript>
+    </section>
   </main>
-  <footer><div class="wrap"><p>Fotos og boligoplysninger vises fra Nybolig. Planlagt opdatering hver morgen kl. 06.17 dansk tid. Nye fund og prisfald registreres ved sammenligning af de daglige opslag.</p></div></footer>
+  <footer class="wrap">Fotos og boligoplysninger fra Nybolig. Planlagt opdatering hver morgen kl. 06.17 dansk tid. Nye fund og prisfald registreres ved sammenligning af de daglige opslag.</footer>
+
+  <dialog id="filter-panel" class="filter-sheet" aria-labelledby="filter-title">
+    <div class="sheet-head"><h2 id="filter-title">Søgefiltre</h2><button class="icon-button" type="button" data-close aria-label="Luk filtre"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+    <form id="filters">
+      <div class="fields">
+        <label>Maks. pris i kroner<input type="number" name="priceMax" min="1" step="1" inputmode="numeric" placeholder="Alle priser"></label>
+        <label>Mindst m²<input type="number" name="areaMin" min="1" step="1" inputmode="numeric" placeholder="Alle størrelser"></label>
+        <label>Mindst antal værelser<input type="number" name="numberOfRoomsMin" min="1" step="1" inputmode="numeric" placeholder="Alle antal"></label>
+      </div>
+      <p class="hint">Dine valg gemmes på denne enhed.</p>
+      <div class="actions"><button type="reset">Nulstil</button><button class="primary" type="submit">Vis boliger</button></div>
+    </form>
+  </dialog>
+
   <template id="home">
     <article class="home">
-      <div class="photo"><span>Foto ikke tilgængeligt</span></div>
-      <div class="card-head"><p class="town"></p><span class="chip" hidden></span></div>
-      <h3></h3>
-      <p class="specs"></p>
-      <div class="card-foot"><div><strong class="price"></strong><small class="drop" hidden></small></div><a class="listing-link">Se annonce <span aria-hidden="true">↗</span></a></div>
+      <div class="photo">
+        <span class="missing">Foto mangler</span>
+        <button class="enlarge" type="button" aria-haspopup="dialog" hidden><span class="expand-icon"><svg class="icon" aria-hidden="true"><use href="#i-expand"/></svg></span></button>
+        <span class="chip" hidden></span>
+      </div>
+      <div class="card-body">
+        <p class="town"></p><h3></h3><p class="specs"></p>
+        <div class="card-foot"><div><strong class="price"></strong><small class="drop" hidden></small></div><a class="listing-link">Se annonce <span aria-hidden="true">↗</span></a></div>
+      </div>
     </article>
   </template>
+
+  <dialog id="viewer" class="viewer" aria-labelledby="viewer-title">
+    <div class="viewer-head"><div><h2 id="viewer-title"></h2><p id="viewer-meta"></p></div>
+      <button class="icon-button" type="button" data-close autofocus aria-label="Luk foto"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+    </div>
+    <div class="viewer-stage"><div class="viewer-canvas"><img id="viewer-photo" alt=""></div></div>
+    <div class="viewer-foot"><span>Foto fra Nybolig</span><button type="button" id="zoom" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-zoom"/></svg><span>Zoom ind</span></button></div>
+  </dialog>
 </body>
 </html>

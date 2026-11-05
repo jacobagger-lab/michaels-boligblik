@@ -6,7 +6,7 @@ const storageKey = 'boligblik.filters.v1';
 const viewNames = {all: 'Alle villaer', new: 'Nye siden i går', drop: 'Prisfald på 7 dage'};
 const currency = new Intl.NumberFormat('da-DK', {maximumFractionDigits: 0});
 const updatedFormat = new Intl.DateTimeFormat('da-DK', {
-  timeZone: 'Europe/Copenhagen', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  timeZone: 'Europe/Copenhagen', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
 });
 const dayFormat = new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'Europe/Copenhagen', year: 'numeric', month: '2-digit', day: '2-digit',
@@ -42,7 +42,10 @@ function displayFilterSummary() {
   if (criteria.priceMax) labels.push('maks. ' + currency.format(criteria.priceMax) + ' kr.');
   if (criteria.areaMin) labels.push('min. ' + criteria.areaMin + ' m²');
   if (criteria.numberOfRoomsMin) labels.push('min. ' + criteria.numberOfRoomsMin + ' vær.');
-  document.querySelector('#filter-summary').textContent = labels.length ? ' · ' + labels.join(' · ') : '';
+  const summary = document.querySelector('#filter-summary');
+  summary.hidden = !labels.length;
+  summary.textContent = labels.join(' · ');
+  document.querySelector('.filter-label').textContent = labels.length ? 'Filtre (' + labels.length + ')' : 'Filtre';
 }
 
 function saveCriteria() {
@@ -78,18 +81,97 @@ function sourceLink(value) {
   return null;
 }
 
+const filterPanel = document.querySelector('#filter-panel');
+const viewer = document.querySelector('#viewer');
+const viewerStage = viewer.querySelector('.viewer-stage');
+const viewerPhoto = document.querySelector('#viewer-photo');
+const zoomButton = document.querySelector('#zoom');
+let openPhoto = null;
+
+function setZoom(active) {
+  if (active && (!viewerPhoto.naturalWidth || !viewerPhoto.naturalHeight)) return;
+  viewerStage.classList.toggle('zoomed', active);
+  zoomButton.setAttribute('aria-pressed', String(active));
+  zoomButton.querySelector('span').textContent = active ? 'Zoom ud' : 'Zoom ind';
+  if (!active) {
+    viewerStage.scrollTo(0, 0);
+    return;
+  }
+  const fit = Math.min(viewerStage.clientWidth / viewerPhoto.naturalWidth, viewerStage.clientHeight / viewerPhoto.naturalHeight);
+  viewerStage.style.setProperty('--zoom-width', viewerPhoto.naturalWidth * fit * 2.5 + 'px');
+  viewerStage.style.setProperty('--zoom-height', viewerPhoto.naturalHeight * fit * 2.5 + 'px');
+  viewerStage.scrollTo((viewerStage.scrollWidth - viewerStage.clientWidth) / 2, (viewerStage.scrollHeight - viewerStage.clientHeight) / 2);
+}
+
+function showPhoto(home, cardImage, fullUrl) {
+  openPhoto = cardImage;
+  document.querySelector('#viewer-title').textContent = home.address;
+  const facts = [];
+  if (home.price != null) facts.push(currency.format(home.price) + ' kr.');
+  if (home.area != null) facts.push(home.area + ' m²');
+  if (home.rooms != null) facts.push(home.rooms + ' vær.');
+  document.querySelector('#viewer-meta').textContent = facts.join(' · ');
+  viewerPhoto.alt = cardImage.alt;
+  viewerPhoto.src = cardImage.currentSrc || cardImage.src;
+  setZoom(false);
+  viewer.showModal();
+  if (fullUrl) {
+    // Keep the already loaded cover visible while the detail image downloads.
+    const full = new Image();
+    full.onload = () => {
+      if (viewer.open && openPhoto === cardImage) viewerPhoto.src = full.src;
+    };
+    full.src = fullUrl;
+  }
+}
+
+const cardWidths = [360, 480, 640, 768, 900, 1080, 1440, 1920];
+const cardSizes = '(max-width: 350px) calc(100vw - 24px), (max-width: 690px) calc(100vw - 32px), (max-width: 1168px) calc((100vw - 70px) / 2), 549px';
+
+function addPhoto(card, home, index) {
+  const preview = home.thumbnailUrl;
+  if (!preview?.startsWith('https://nybolig.mindworking.eu/api/')) return;
+  const image = new Image();
+  const enlarge = card.querySelector('.enlarge');
+  const missing = card.querySelector('.missing');
+  const asset = new URL(preview);
+  const canResize = asset.pathname.includes('/imageSize/Preview/');
+  asset.pathname = asset.pathname.replace('/imageSize/Preview/', '/imageSize/Assets/');
+  function resized(width) {
+    asset.searchParams.set('jq', '84');
+    asset.searchParams.set('w', String(width));
+    return asset.href;
+  }
+  const fullUrl = canResize ? resized(2100) : null;
+  image.alt = 'Annoncefoto af ' + home.address;
+  image.loading = index < 2 ? 'eager' : 'lazy';
+  if (index === 0) image.fetchPriority = 'high';
+  image.addEventListener('load', () => { enlarge.hidden = false; });
+  image.addEventListener('error', () => {
+    if (image.hasAttribute('srcset')) {
+      image.removeAttribute('srcset');
+      image.removeAttribute('sizes');
+      image.src = preview;
+    } else {
+      image.remove();
+      enlarge.hidden = true;
+      missing.hidden = false;
+    }
+  });
+  enlarge.setAttribute('aria-label', 'Forstør foto af ' + home.address);
+  enlarge.addEventListener('click', () => showPhoto(home, image, fullUrl));
+  missing.hidden = true;
+  if (canResize) {
+    image.sizes = cardSizes;
+    image.srcset = cardWidths.map(width => resized(width) + ' ' + width + 'w').join(', ');
+  }
+  image.src = canResize ? resized(768) : preview;
+  card.querySelector('.photo').prepend(image);
+}
+
 function renderHome(home, today, index) {
   const card = document.querySelector('#home').content.cloneNode(true);
-  if (home.thumbnailUrl?.startsWith('https://nybolig.mindworking.eu/api/')) {
-    const photo = card.querySelector('.photo');
-    const image = new Image();
-    image.alt = 'Annoncefoto fra Nybolig af ' + home.address;
-    image.loading = index < 2 ? 'eager' : 'lazy';
-    if (index === 0) image.fetchPriority = 'high';
-    image.addEventListener('error', () => image.remove(), {once:true});
-    image.src = home.thumbnailUrl;
-    photo.append(image);
-  }
+  addPhoto(card, home, index);
   const town = [home.postalCode, home.city].filter(Boolean).join(' ');
   card.querySelector('.town').textContent = town;
   const suffix = ', ' + town;
@@ -116,7 +198,10 @@ function renderHome(home, today, index) {
     anchor.href = href;
     anchor.setAttribute('aria-label', 'Se ' + home.address + ' hos Nybolig');
   } else {
-    anchor.replaceWith('Annoncelink afventes');
+    const pending = document.createElement('span');
+    pending.className = 'link-pending';
+    pending.textContent = 'Annoncelink afventes';
+    anchor.replaceWith(pending);
   }
   return card;
 }
@@ -130,7 +215,7 @@ function render() {
   const lists = {all, new:fresh, drop:drops};
   for (const button of document.querySelectorAll('#views button')) {
     button.setAttribute('aria-pressed', String(button.dataset.view === view));
-    button.querySelector('span').textContent = lists[button.dataset.view].length;
+    button.querySelector('span:last-child').textContent = lists[button.dataset.view].length;
   }
   const results = lists[view];
   results.sort((a, b) => {
@@ -173,7 +258,7 @@ async function load() {
       throw Error('Data unavailable');
     }
     data = result;
-    document.querySelector('#freshness').textContent = 'Senest hentet ' + updatedFormat.format(new Date(timestamp));
+    document.querySelector('#freshness').textContent = 'Opdateret ' + updatedFormat.format(new Date(timestamp));
     if (Date.now() - timestamp > 30 * 3600000) {
       const warning = document.querySelector('#warning');
       warning.hidden = false;
@@ -188,15 +273,36 @@ async function load() {
     empty.textContent = 'Prøv at genindlæse siden om lidt.';
   }
 }
+zoomButton.addEventListener('click', () => setZoom(!viewerStage.classList.contains('zoomed')));
+window.addEventListener('resize', () => {
+  if (viewer.open && viewerStage.classList.contains('zoomed')) setZoom(false);
+});
+viewer.addEventListener('close', () => {
+  openPhoto = null;
+  viewerPhoto.removeAttribute('src');
+});
+document.querySelector('#filter-open').addEventListener('click', () => {
+  for (const key of criteriaKeys) criteriaForm.elements[key].value = criteria[key] || '';
+  filterPanel.showModal();
+});
+for (const dialog of [filterPanel, viewer]) {
+  dialog.querySelector('[data-close]').addEventListener('click', () => dialog.close());
+}
+filterPanel.addEventListener('click', event => {
+  if (event.target !== filterPanel) return;
+  const bounds = filterPanel.getBoundingClientRect();
+  if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) filterPanel.close();
+});
 criteriaForm.addEventListener('submit', event => {
   event.preventDefault();
   saveCriteria();
-  document.querySelector('#filter-panel').open = false;
+  filterPanel.close();
 });
 criteriaForm.addEventListener('reset', event => {
   event.preventDefault();
   for (const key of criteriaKeys) criteriaForm.elements[key].value = '';
   saveCriteria();
+  filterPanel.close();
 });
 for (const button of document.querySelectorAll('#views button')) {
   button.addEventListener('click', () => {
