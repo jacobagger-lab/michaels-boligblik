@@ -72,11 +72,17 @@ function restoreCriteria() {
   displayFilterSummary();
 }
 
-function sourceLink(value) {
+const brokerHosts = {
+  Nybolig: ['nybolig.dk', 'www.nybolig.dk'],
+  home: ['home.dk'], danbolig: ['danbolig.dk'], LokalBolig: ['www.lokalbolig.dk'],
+};
+const previewHosts = {home: 'home.mindworking.eu', danbolig: 'danbolig.mindworking.eu', LokalBolig: 'lokalbolig.io'};
+
+function sourceLink(value, source) {
   if (!value) return null;
   try {
     const url = new URL(value);
-    if (url.protocol === 'https:' && ['www.nybolig.dk', 'nybolig.dk'].includes(url.hostname)) return url.href;
+    if (url.protocol === 'https:' && brokerHosts[source]?.includes(url.hostname)) return url.href;
   } catch { /* Some published records have no link yet. */ }
   return null;
 }
@@ -130,6 +136,25 @@ const cardSizes = '(max-width: 350px) calc(100vw - 24px), (max-width: 690px) cal
 
 function addPhoto(card, home, index) {
   const preview = home.thumbnailUrl;
+  if (home.source !== 'Nybolig') {
+    const href = sourceLink(home.url, home.source);
+    if (!href || !preview?.startsWith('https://' + previewHosts[home.source] + '/')) return;
+    const image = new Image();
+    const link = document.createElement('a');
+    const missing = card.querySelector('.missing');
+    link.className = 'photo-link';
+    link.href = href;
+    link.setAttribute('aria-label', 'Se billeder af ' + home.address + ' hos ' + home.source);
+    image.alt = 'Annoncefoto fra ' + home.source + ' af ' + home.address;
+    image.loading = index < 2 ? 'eager' : 'lazy';
+    if (!index) image.fetchPriority = 'high';
+    image.addEventListener('error', () => { link.remove(); missing.hidden = false; }, {once:true});
+    missing.hidden = true;
+    link.append(image);
+    card.querySelector('.photo').prepend(link);
+    image.src = preview;
+    return;
+  }
   if (!preview?.startsWith('https://nybolig.mindworking.eu/api/')) return;
   const image = new Image();
   const enlarge = card.querySelector('.enlarge');
@@ -173,7 +198,7 @@ function renderHome(home, today, index) {
   const card = document.querySelector('#home').content.cloneNode(true);
   addPhoto(card, home, index);
   const town = [home.postalCode, home.city].filter(Boolean).join(' ');
-  card.querySelector('.town').textContent = town;
+  card.querySelector('.town').textContent = town + ' · ' + home.source;
   const suffix = ', ' + town;
   const street = town && home.address.endsWith(suffix) ? home.address.slice(0, -suffix.length) : home.address;
   card.querySelector('h3').textContent = street || 'Adresse ikke oplyst';
@@ -192,11 +217,11 @@ function renderHome(home, today, index) {
     drop.hidden = false;
     drop.textContent = 'Nedsat ' + currency.format(home.priceChange.previous - home.price) + ' kr.';
   }
-  const anchor = card.querySelector('a');
-  const href = sourceLink(home.url);
+  const anchor = card.querySelector('.listing-link');
+  const href = sourceLink(home.url, home.source);
   if (href) {
     anchor.href = href;
-    anchor.setAttribute('aria-label', 'Se ' + home.address + ' hos Nybolig');
+    anchor.setAttribute('aria-label', 'Se ' + home.address + ' hos ' + home.source);
   } else {
     const pending = document.createElement('span');
     pending.className = 'link-pending';
@@ -238,7 +263,7 @@ function render() {
   else if (view === 'drop') empty.textContent = 'Ingen registrerede prisfald blandt dine match de seneste syv dage.';
   else empty.textContent = all.length === 0 && Object.keys(criteria).length
     ? 'Ingen villaer matcher dine søgekriterier. Prøv at justere dem ovenfor.'
-    : 'Nybolig har ingen aktive villaer i området i seneste opdatering.';
+    : 'Ingen af de tilknyttede mæglere har aktive villaer i den seneste opdatering.';
   const baseline = document.querySelector('#baseline');
   const isFirstDay = data.baselineDate === dayFormat.format(new Date(data.updatedAt));
   baseline.hidden = !isFirstDay;
@@ -254,15 +279,46 @@ async function load() {
     if (!response.ok) throw Error('Fetch failed');
     const result = await response.json();
     const timestamp = Date.parse(result.updatedAt);
-    if (result.schemaVersion !== 1 || !Array.isArray(result.listings) || !Number.isFinite(timestamp)) {
+    if (![1, 2].includes(result.schemaVersion) || !Array.isArray(result.listings) || !Number.isFinite(timestamp)) {
       throw Error('Data unavailable');
     }
-    data = result;
+    const sources = result.sources || {Nybolig:{status:'ok', count:result.listings.length, updatedAt:result.updatedAt}};
+    const delayed = [];
+    const list = document.querySelector('#source-list');
+    list.replaceChildren();
+    for (const [name, info] of Object.entries(sources)) {
+      const li = document.createElement('li');
+      li.textContent = name + ' · ' + info.count + (info.count === 1 ? ' villa' : ' villaer');
+      const time = document.createElement('small');
+      time.textContent = info.updatedAt ? 'Hentet ' + updatedFormat.format(new Date(info.updatedAt)) : 'Afventer første opdatering';
+      if (info.status === 'delayed') {
+        delayed.push(name);
+        time.textContent += ' · Forsinket';
+      }
+      li.append(time);
+      list.append(li);
+    }
+    document.querySelector('#coverage-open').textContent = Object.keys(sources).length + ' mæglerkilder';
+    // Prefer current records and direct listing links when brokers share an address.
+    const rank = home => (sources[home.source]?.status === 'ok' ? 2 : 0) + Number(Boolean(sourceLink(home.url, home.source)));
+    const unique = new Map();
+    for (const row of result.listings) {
+      row.source ||= 'Nybolig';
+      const key = row.addressKey || row.id;
+      const other = unique.get(key);
+      if (!other || rank(row) > rank(other)) unique.set(key, row);
+    }
+    data = {...result, listings:[...unique.values()]};
     document.querySelector('#freshness').textContent = 'Opdateret ' + updatedFormat.format(new Date(timestamp));
     if (Date.now() - timestamp > 30 * 3600000) {
       const warning = document.querySelector('#warning');
       warning.hidden = false;
       warning.textContent = 'Opdateringen er forsinket. Listen viser senest hentede boliger og priser.';
+    }
+    if (delayed.length) {
+      const warning = document.querySelector('#warning');
+      warning.hidden = false;
+      warning.textContent = 'Seneste hentning fra ' + delayed.join(', ') + ' er forsinket. Se tidspunktet under mæglerkilder.';
     }
     render();
   } catch {
@@ -285,7 +341,9 @@ document.querySelector('#filter-open').addEventListener('click', () => {
   for (const key of criteriaKeys) criteriaForm.elements[key].value = criteria[key] || '';
   filterPanel.showModal();
 });
-for (const dialog of [filterPanel, viewer]) {
+const coverage = document.querySelector('#coverage');
+document.querySelector('#coverage-open').addEventListener('click', () => coverage.showModal());
+for (const dialog of [filterPanel, viewer, coverage]) {
   dialog.querySelector('[data-close]').addEventListener('click', () => dialog.close());
 }
 filterPanel.addEventListener('click', event => {

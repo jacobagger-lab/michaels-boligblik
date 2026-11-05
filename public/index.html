@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#183e34">
-  <meta name="description" content="Michaels daglige overblik over Nyboligs villaer i Hillerød Kommune.">
+  <meta name="description" content="Michaels daglige overblik over villaer fra flere mæglere i Hillerød Kommune.">
   <title>Michaels boligblik · Hillerød</title>
   <link rel="preconnect" href="https://nybolig.mindworking.eu">
-  <link rel="stylesheet" href="./styles.css?v=boligfoto2">
-  <script src="./app.js?v=boligfoto2" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=maeglere3">
+  <script src="./app.js?v=maeglere3" defer></script>
 </head>
 <body>
   <svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -27,7 +27,7 @@
   <main class="wrap">
     <div class="intro">
       <h1>Villaer til salg</h1>
-      <p class="source"><span>Nybolig</span><span aria-hidden="true">·</span><span id="freshness" role="status">Henter boliger …</span></p>
+      <p class="source"><button id="coverage-open" type="button" aria-haspopup="dialog">Mæglerkilder</button><span aria-hidden="true">·</span><span id="freshness" role="status">Henter boliger …</span></p>
     </div>
     <p id="warning" class="warning" role="status" hidden></p>
     <div class="toolbar">
@@ -47,8 +47,13 @@
       <noscript><p>Aktivér JavaScript for at se boligerne og bruge filtrene.</p></noscript>
     </section>
   </main>
-  <footer class="wrap">Fotos og boligoplysninger fra Nybolig. Planlagt opdatering hver morgen kl. 06.17 dansk tid. Nye fund og prisfald registreres ved sammenligning af de daglige opslag.</footer>
+  <footer class="wrap">Boligoplysninger og fotos kommer fra mægleren på hvert boligkort. Planlagt opdatering hver morgen kl. 06.17 dansk tid. Nye fund og prisfald registreres ved sammenligning af de daglige opslag.</footer>
 
+  <dialog id="coverage" class="filter-sheet" aria-labelledby="coverage-title">
+    <div class="sheet-head"><h2 id="coverage-title">Mæglerdækning</h2><button type="button" class="icon-button" data-close aria-label="Luk mæglerdækning"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
+    <p class="coverage-intro">Villaer i Hillerød Kommune fra disse mæglere. Samme adresse vises én gang i oversigten.</p>
+    <ul id="source-list"></ul>
+  </dialog>
   <dialog id="filter-panel" class="filter-sheet" aria-labelledby="filter-title">
     <div class="sheet-head"><h2 id="filter-title">Søgefiltre</h2><button class="icon-button" type="button" data-close aria-label="Luk filtre"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
     <form id="filters">

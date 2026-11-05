@@ -1,15 +1,20 @@
-"""Refresh the current Hillerød search from Nybolig's public MCP service."""
+"""Refresh the current Hillerød search from the participating brokers."""
 
 import argparse
 import json
 import math
 import os
+import re
 import subprocess
+import sys
 import tempfile
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlsplit
+from xml.etree.ElementTree import ParseError
 from zoneinfo import ZoneInfo
+
+from brokers import danbolig_listings, home_listings, lokalbolig_listings
 
 
 ENDPOINT = "https://mcp.nybolig.dk/mcp"
@@ -81,7 +86,7 @@ def listing(row):
     if not isinstance(thumbnail, str) or not thumbnail.startswith("https://nybolig.mindworking.eu/api/"):
         thumbnail = None
     return {
-        "id": row["id"], "address": row["address"], "postalCode": row["postal_code"],
+        "id": row["id"], "source": "Nybolig", "address": row["address"], "postalCode": row["postal_code"],
         "city": row["city"], "price": number(row["price"]), "area": number(row["living_area"]),
         "rooms": number(row["rooms"]), "url": url, "thumbnailUrl": thumbnail,
     }
@@ -108,39 +113,75 @@ def current_listings():
     return rows
 
 
-def build_snapshot(rows, previous, now):
+SOURCES = {"Nybolig": current_listings, "home": home_listings,
+           "danbolig": danbolig_listings, "LokalBolig": lokalbolig_listings}
+
+
+def address_key(row):
+    # The first segment is street and house number. Brokers vary in how they
+    # append the district. Preserve apartment identifiers when present.
+    parts = row["address"].casefold().split(",")
+    street = re.sub(r"\s+", " ", parts[0]).strip()
+    unit = parts[1].strip() if len(parts) > 1 and re.match(r"^\s*(?:st\.|kld\.|\d{1,2}\.)", parts[1]) else ""
+    return f"{row['postalCode']}|{street}|{unit}"
+
+
+def build_snapshot(previous, now, sources=None):
+    sources = SOURCES if sources is None else sources
     today = now.astimezone(ZoneInfo("Europe/Copenhagen")).date().isoformat()
-    old_rows = {}
-    baseline = today
-    if previous is not None:
-        if (previous["schemaVersion"], previous["source"], previous["municipality"]) != (1, "Nybolig", AREA):
-            raise ValueError("Previous snapshot belongs to a different data source or schema.")
-        old_rows = {row["id"]: row for row in previous["listings"]}
-        if len(old_rows) != len(previous["listings"]):
-            raise ValueError("Previous snapshot contains duplicate IDs.")
-        baseline = date.fromisoformat(previous["baselineDate"]).isoformat()
-        last_update = datetime.fromisoformat(previous["updatedAt"].replace("Z", "+00:00"))
-        if last_update > now or baseline > today:
-            raise ValueError("Previous snapshot is newer than this execution.")
-        if old_rows and not rows:
-            raise ValueError("Unexpected empty search; retaining the previous successful snapshot.")
-
+    stamp = now.isoformat(timespec="seconds").replace("+00:00", "Z")
+    previous = previous or {}
+    old_rows = previous.get("listings", [])
+    prior_sources = previous.get("sources", {})
+    if previous:
+        if previous.get("municipality") != AREA or previous.get("schemaVersion") not in (1, 2):
+            raise ValueError("Unexpected previous snapshot.")
+        if previous["schemaVersion"] == 1:
+            if previous["source"] != "Nybolig":
+                raise ValueError("Unexpected legacy source.")
+            prior_sources = {"Nybolig": {"updatedAt": previous["updatedAt"]}}
+        if datetime.fromisoformat(previous["updatedAt"].replace("Z", "+00:00")) > now:
+            raise ValueError("Previous snapshot is newer than this run.")
+    old_by_id = {row["id"]: row for row in old_rows}
+    old_by_address = {address_key(row): row for row in old_rows}
+    if len(old_by_id) != len(old_rows):
+        raise ValueError("Duplicate IDs in previous snapshot.")
+    source_info = {}
+    rows = []
+    success = 0
+    for name, fetch_rows in sources.items():
+        prior = prior_sources.get(name, {})
+        try:
+            fresh = fetch_rows()
+            if not fresh or len({r["id"] for r in fresh}) != len(fresh):
+                raise ValueError("Empty or duplicated source results.")
+            for row in fresh:
+                row["source"] = name
+                old = old_by_id.get(row["id"])
+                known = old or old_by_address.get(address_key(row))
+                row["firstSeen"] = known["firstSeen"] if known else today
+                row["isBaseline"] = known["isBaseline"] if known else not prior.get("updatedAt")
+                change = old["priceChange"] if old else None
+                if old and old["price"] != row["price"]:
+                    start = change["previous"] if change and change["date"] == today else old["price"]
+                    change = ({"date": today, "previous": start}
+                              if start is not None and row["price"] is not None and row["price"] != start else None)
+                row["priceChange"] = change
+            rows.extend(fresh)
+            source_info[name] = {"updatedAt": stamp, "status": "ok", "count": len(fresh)}
+            success += 1
+        except (KeyError, IndexError, TypeError, ValueError, ParseError, subprocess.SubprocessError) as exc:
+            saved = [dict(row, source=name) for row in old_rows if row.get("source", "Nybolig") == name]
+            rows.extend(saved)
+            source_info[name] = {"updatedAt": prior.get("updatedAt"), "status": "delayed", "count": len(saved)}
+            print(f"::warning::{name}: {exc}. Retained {len(saved)} previous listings.", file=sys.stderr)
+    if not success:
+        raise ValueError("All sources failed; retaining the publicly available snapshot.")
     for row in rows:
-        old = old_rows.get(row["id"])
-        row["firstSeen"] = old["firstSeen"] if old else today
-        row["isBaseline"] = old["isBaseline"] if old else previous is None
-        change = old["priceChange"] if old else None
-        if old and old["price"] != row["price"]:
-            start_price = change["previous"] if change and change["date"] == today else old["price"]
-            change = None
-            if start_price is not None and row["price"] is not None and row["price"] != start_price:
-                change = {"date": today, "previous": start_price}
-        row["priceChange"] = change
-
+        row["addressKey"] = address_key(row)
     return {
-        "schemaVersion": 1, "source": "Nybolig", "municipality": AREA,
-        "updatedAt": now.isoformat(timespec="seconds").replace("+00:00", "Z"),
-        "baselineDate": baseline,
+        "schemaVersion": 2, "municipality": AREA, "sources": source_info, "updatedAt": stamp,
+        "baselineDate": previous.get("baselineDate", today),
         "listings": sorted(rows, key=lambda row: (row["address"], row["id"])),
     }
 
@@ -152,7 +193,7 @@ def main():
     args = parser.parse_args()
     prior_path = args.previous or (args.output if args.output.is_file() else None)
     previous = json.loads(prior_path.read_text(encoding="utf-8")) if prior_path else None
-    snapshot = build_snapshot(current_listings(), previous, datetime.now(timezone.utc))
+    snapshot = build_snapshot(previous, datetime.now(timezone.utc))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     temp_path = None
     try:
@@ -164,7 +205,7 @@ def main():
     finally:
         if temp_path and temp_path.exists():
             temp_path.unlink()
-    print(f"Updated {len(snapshot['listings'])} listings from Nybolig at {snapshot['updatedAt']}.")
+    print(f"Updated {len(snapshot['listings'])} broker listings at {snapshot['updatedAt']}.")
 
 
 if __name__ == "__main__":

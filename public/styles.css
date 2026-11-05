@@ -134,3 +134,11 @@ input { min-height: 46px; border: 1px solid #aeb9ac; border-radius: 8px; padding
   .viewer-head, .viewer-foot { padding-block: 4px; }
   .viewer-head p { display: none; }
 }
+
+#coverage-open { border: 0; background: transparent; padding: 6px 0; margin-block: -6px; min-height: 36px; text-decoration: underline; text-underline-offset: 3px; font-size: inherit; color: var(--forest); font-weight: 650; }
+.coverage-intro { margin: 16px 0 10px; font-size: .9rem; color: var(--muted); }
+#source-list { list-style: none; padding: 0; margin: 0; }
+#source-list li { padding: 10px 0; border-top: 1px solid var(--line); }
+#source-list small { display: block; color: var(--muted); }
+.photo-link { position: absolute; inset: 0; z-index: 1; }
+.photo-link:focus-visible { outline-offset: -4px; }
