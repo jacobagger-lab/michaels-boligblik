@@ -176,6 +176,13 @@ def build_snapshot(previous, now, sources=None):
             prior_sources = {"Nybolig": {"updatedAt": previous["updatedAt"]}}
         if datetime.fromisoformat(previous["updatedAt"].replace("Z", "+00:00")) > now:
             raise ValueError("Previous snapshot is newer than this run.")
+    old_scope = previous.get("scope") or {}
+    covers_scope = old_scope == SCOPE
+    if (old_scope.get("latitude") == LAT and old_scope.get("longitude") == LON
+            and old_scope.get("radiusKm", 0) > RADIUS_KM):
+        # The wider search already tracked this entire area, including any delayed source.
+        old_rows = [row for row in old_rows if row["distanceKm"] <= RADIUS_KM]
+        covers_scope = True
     old_by_id = {row["id"]: row for row in old_rows}
     old_by_address = {address_key(row): row for row in old_rows}
     if len(old_by_id) != len(old_rows):
@@ -195,7 +202,7 @@ def build_snapshot(previous, now, sources=None):
                 row["source"] = name
                 known = old_by_id.get(row["id"]) or old_by_address.get(address_key(row))
                 row["firstSeen"] = known["firstSeen"] if known else today
-                row["isBaseline"] = known["isBaseline"] if known else previous.get("scope") != SCOPE or not prior.get("updatedAt")
+                row["isBaseline"] = known["isBaseline"] if known else not covers_scope or not prior.get("updatedAt")
             rows.extend(fresh)
             source_info[name] = {"updatedAt": stamp, "status": "ok", "count": len(fresh)}
             success += 1
@@ -204,7 +211,7 @@ def build_snapshot(previous, now, sources=None):
             rows.extend(saved)
             source_info[name] = {"updatedAt": prior.get("updatedAt"), "status": "delayed", "count": len(saved)}
             print(f"::warning::{name}: {exc}. Retained {len(saved)} previous listings.", file=sys.stderr)
-    if previous.get("scope") != SCOPE and success < len(sources):
+    if not covers_scope and success < len(sources):
         raise ValueError("All brokers must complete the first refresh for the new radius.")
     if not success:
         raise ValueError("All sources failed; retaining the publicly available snapshot.")

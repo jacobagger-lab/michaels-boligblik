@@ -1,10 +1,10 @@
-"""A single geographic definition shared by all four sources."""
+"""A single geographic definition shared by all broker sources."""
 import math
 
-LAT, LON, RADIUS_KM = 55.9301, 12.3118, 20
+LAT, LON, RADIUS_KM = 55.9301, 12.3118, 12
 SCOPE = {"latitude": LAT, "longitude": LON, "radiusKm": RADIUS_KM}
 
-# Postcodes intersecting a 23 km buffer (DAGI; extra 3 km for discovery only).
+# Postcodes intersecting a broad 23 km discovery area (DAGI).
 # https://kort.vd.dk/server/rest/services/Grunddata/Danmarks_Administrative_Geografiske_Inddelinger/MapServer/38
 # The final inclusion check always uses the house coordinates, never a postcode centroid.
 POSTCODES = set("""2730 2740 2750 2760 2765 2800 2820 2830 2840 2850 2860 2880

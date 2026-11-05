@@ -279,11 +279,11 @@ function render(append = false) {
 
 async function load() {
   try {
-    const response = await fetch('./boliger.json?format=lokal9', {cache:'no-store'});
+    const response = await fetch('./boliger.json?format=radius12', {cache:'no-store'});
     if (!response.ok) throw Error('Fetch failed');
     const result = await response.json();
     const timestamp = Date.parse(result.updatedAt);
-    if (result.schemaVersion !== 3 || result.scope?.radiusKm !== 20 || !Array.isArray(result.listings) || !Number.isFinite(timestamp)) {
+    if (result.schemaVersion !== 3 || result.scope?.radiusKm !== 12 || !Array.isArray(result.listings) || !Number.isFinite(timestamp)) {
       throw Error('Data unavailable');
     }
     const sources = result.sources || {Nybolig:{status:'ok', count:result.listings.length, updatedAt:result.updatedAt}};
