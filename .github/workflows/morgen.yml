@@ -1,0 +1,59 @@
+name: Michaels morgenoverblik
+on:
+  schedule:
+    - cron: '17 6 * * *'
+      timezone: Europe/Copenhagen
+  workflow_dispatch:
+    inputs:
+      first_publish:
+        description: Tillad første indlæsning hvis der endnu ikke findes boligdata
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: boligblik-pages
+  cancel-in-progress: false
+
+jobs:
+  opdater:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Hent sidste offentliggjorte overblik
+        env:
+          FIRST_PUBLISH: ${{ inputs.first_publish }}
+          PUBLISHED_URL: https://jacobagger-lab.github.io/michaels-boligblik/boliger.json
+        run: |
+          status=$(curl --silent --show-error --location --retry 3 --retry-all-errors \
+            --max-time 25 --output "$RUNNER_TEMP/previous.json" --write-out '%{http_code}' \
+            "$PUBLISHED_URL?run=$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT")
+          case "$status" in
+            200) python3 scripts/refresh.py --previous "$RUNNER_TEMP/previous.json" --output public/boliger.json ;;
+            404) if [[ "$FIRST_PUBLISH" != true ]]; then echo "::error::Sidste boligoversigt mangler"; exit 1; fi
+                 python3 scripts/refresh.py --output public/boliger.json ;;
+            *)   echo "::error::Kunne ikke hente sidste overblik (HTTP $status)"; exit 1 ;;
+          esac
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: public
+          retention-days: 1
+  udgiv:
+    needs: opdater
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Udgiv det kontrollerede overblik
+        id: deployment
+        uses: actions/deploy-pages@v5

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#19392f">
+  <meta name="description" content="Michaels daglige overblik over Nyboligs villaer i Hillerød Kommune.">
+  <title>Michaels boligblik · Hillerød</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <header class="mast"><div class="wrap mast-inner">
+    <span class="brand"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M2 16 16 4l14 12M7 14v14h18V14M13 28V17h6v11" stroke="currentColor" stroke-width="2"/></svg>Michaels boligblik</span>
+    <span class="location">Hillerød Kommune</span>
+  </div></header>
+  <main>
+    <section class="hero"><div class="wrap hero-inner">
+      <div class="hero-copy">
+        <h1>Villaer til salg</h1>
+        <p>Nyboligs aktuelle villaer i Hillerød Kommune.</p>
+        <p id="freshness" class="stamp" role="status">Henter seneste opdatering …</p>
+      </div>
+      <svg class="drawing" viewBox="0 0 270 128" fill="none" aria-hidden="true">
+        <g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 113h268M16 122h201M193 117h54M20 104l12-24 13 24m-13-17v26m7-22 14-28 16 28H57l13 12H38l8-12m8-14v36"/>
+          <path d="M62 88l55-39 44 39m-88-4v29h80V83m-68-11 32-23 44 39h63l-45-39h-62m37 64h64V88m-36-37v-17h11v23M85 98h14v15H85zm26 15V93h17v20m9-19h9v10h-9zm29 3h13v10h-13zm24 0h13v10h-13z"/>
+          <path d="M219 105l11-23 13 23h-9l9 8h-25l9-8m4-11v19M8 109q27-11 60 1m153-1q22-6 44 1"/>
+          <circle cx="228" cy="38" r="15"/>
+        </g>
+      </svg>
+    </div></section>
+    <div class="wrap">
+      <p id="warning" class="warning" role="status" hidden></p>
+      <nav id="views" class="views" aria-label="Vælg boligoversigt">
+        <button type="button" data-view="all" aria-pressed="true">Alle villaer <span>–</span></button>
+        <button type="button" data-view="new" aria-pressed="false">Nye siden i går <span>–</span></button>
+        <button type="button" data-view="drop" aria-pressed="false">Prisfald på 7 dage <span>–</span></button>
+      </nav>
+      <details class="criteria" id="filter-panel">
+        <summary><span><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M2 5h6m4 0h6M2 14h10m4 0h2M8 2v6m5 3v6" stroke="currentColor" stroke-width="1.7"/></svg>Søgekriterier</span><span id="filter-summary"></span></summary>
+        <form id="filters">
+          <div class="fields">
+            <label>Maks. pris i kr.<input type="number" name="priceMax" min="1" step="1" inputmode="numeric" placeholder="Alle priser"></label>
+            <label>Mindst m²<input type="number" name="areaMin" min="1" step="1" inputmode="numeric" placeholder="Alle størrelser"></label>
+            <label>Mindst antal værelser<input type="number" name="numberOfRoomsMin" min="1" step="1" inputmode="numeric" placeholder="Alle antal"></label>
+          </div>
+          <div class="actions"><button type="submit">Anvend</button><button type="reset">Nulstil</button><small>Gemmes på denne enhed.</small></div>
+        </form>
+      </details>
+      <section aria-labelledby="list-title">
+        <div class="section-head"><h2 id="list-title">Alle villaer</h2><span id="count" role="status"></span></div>
+        <p id="baseline" class="note" hidden></p>
+        <div id="list" class="grid"></div>
+        <p id="empty" class="empty" role="status" hidden></p>
+        <noscript><p>Aktivér JavaScript for at se boligerne og bruge filtrene.</p></noscript>
+      </section>
+    </div>
+  </main>
+  <footer><div class="wrap"><p>Boligoplysninger fra Nybolig. Planlagt opdatering hver morgen kl. 06.17 dansk tid. Nye fund og prisfald registreres ved sammenligning af de daglige opslag.</p></div></footer>
+  <template id="home">
+    <article class="home">
+      <div class="card-head"><p class="town"></p><span class="chip" hidden></span></div>
+      <h3></h3>
+      <p class="specs"></p>
+      <div class="card-foot"><div><strong class="price"></strong><small class="drop" hidden></small></div><a class="listing-link">Se annonce <span aria-hidden="true">↗</span></a></div>
+    </article>
+  </template>
+</body>
+</html>
