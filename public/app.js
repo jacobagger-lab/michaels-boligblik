@@ -14,6 +14,8 @@ const dayFormat = new Intl.DateTimeFormat('sv-SE', {
 const dateLabelFormat = new Intl.DateTimeFormat('da-DK', {timeZone:'UTC', day:'numeric', month:'long'});
 let data = null;
 let view = 'all';
+const pageSize = 24;
+let shown = pageSize;
 let criteria = {};
 
 function dayOffset(day, offset) {
@@ -56,6 +58,7 @@ function saveCriteria() {
   }
   try { localStorage.setItem(storageKey, JSON.stringify(criteria)); } catch { /* Browser storage is optional. */ }
   displayFilterSummary();
+  shown = pageSize;
   render();
 }
 
@@ -198,7 +201,7 @@ function renderHome(home, today, index) {
   const card = document.querySelector('#home').content.cloneNode(true);
   addPhoto(card, home, index);
   const town = [home.postalCode, home.city].filter(Boolean).join(' ');
-  card.querySelector('.town').textContent = town + ' · ' + home.source;
+  card.querySelector('.town').textContent = town + ' · ' + home.distanceKm.toLocaleString('da-DK', {maximumFractionDigits:1}) + ' km · ' + home.source;
   const suffix = ', ' + town;
   const street = town && home.address.endsWith(suffix) ? home.address.slice(0, -suffix.length) : home.address;
   card.querySelector('h3').textContent = street || 'Adresse ikke oplyst';
@@ -231,7 +234,7 @@ function renderHome(home, today, index) {
   return card;
 }
 
-function render() {
+function render(append = false) {
   if (!data) return;
   const today = dayFormat.format(new Date());
   const all = data.listings.filter(meetsCriteria);
@@ -249,14 +252,18 @@ function render() {
       if (byDate) return byDate;
     }
     const byFirstSeen = b.firstSeen.localeCompare(a.firstSeen);
-    return byFirstSeen || a.address.localeCompare(b.address, 'da', {numeric:true});
+    return Number(a.isBaseline) - Number(b.isBaseline) || byFirstSeen || a.distanceKm - b.distanceKm || a.address.localeCompare(b.address, 'da', {numeric:true});
   });
   document.querySelector('#list-title').textContent = viewNames[view];
   document.querySelector('#count').textContent = results.length + (results.length === 1 ? ' bolig' : ' boliger');
   const list = document.querySelector('#list');
   const cards = document.createDocumentFragment();
-  results.forEach((home, index) => cards.append(renderHome(home, today, index)));
-  list.replaceChildren(cards);
+  const start = append ? list.childElementCount : 0;
+  results.slice(start, shown).forEach((home, i) => cards.append(renderHome(home, today, start + i)));
+  if (append) list.append(cards); else list.replaceChildren(cards);
+  const more = document.querySelector('#more');
+  more.hidden = shown >= results.length;
+  more.textContent = 'Vis ' + Math.min(pageSize, Math.max(0, results.length - shown)) + ' flere villaer';
   const empty = document.querySelector('#empty');
   empty.hidden = results.length > 0;
   if (view === 'new') empty.textContent = 'Ingen nye fund blandt dine match siden i går.';
@@ -279,7 +286,7 @@ async function load() {
     if (!response.ok) throw Error('Fetch failed');
     const result = await response.json();
     const timestamp = Date.parse(result.updatedAt);
-    if (![1, 2].includes(result.schemaVersion) || !Array.isArray(result.listings) || !Number.isFinite(timestamp)) {
+    if (result.schemaVersion !== 3 || result.scope?.radiusKm !== 20 || !Array.isArray(result.listings) || !Number.isFinite(timestamp)) {
       throw Error('Data unavailable');
     }
     const sources = result.sources || {Nybolig:{status:'ok', count:result.listings.length, updatedAt:result.updatedAt}};
@@ -291,6 +298,7 @@ async function load() {
       li.textContent = name + ' · ' + info.count + (info.count === 1 ? ' villa' : ' villaer');
       const time = document.createElement('small');
       time.textContent = info.updatedAt ? 'Hentet ' + updatedFormat.format(new Date(info.updatedAt)) : 'Afventer første opdatering';
+      if (info.pendingLinks) time.textContent += ' · ' + info.pendingLinks + ' uden direkte link er udeladt';
       if (info.status === 'delayed') {
         delayed.push(name);
         time.textContent += ' · Forsinket';
@@ -303,7 +311,7 @@ async function load() {
     const rank = home => (sources[home.source]?.status === 'ok' ? 2 : 0) + Number(Boolean(sourceLink(home.url, home.source)));
     const unique = new Map();
     for (const row of result.listings) {
-      row.source ||= 'Nybolig';
+      if (!sourceLink(row.url, row.source)) continue;
       const key = row.addressKey || row.id;
       const other = unique.get(key);
       if (!other || rank(row) > rank(other)) unique.set(key, row);
@@ -365,8 +373,10 @@ criteriaForm.addEventListener('reset', event => {
 for (const button of document.querySelectorAll('#views button')) {
   button.addEventListener('click', () => {
     view = button.dataset.view;
+    shown = pageSize;
     render();
   });
 }
+document.querySelector('#more').addEventListener('click', () => { shown += pageSize; render(true); });
 restoreCriteria();
 load();

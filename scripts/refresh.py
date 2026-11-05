@@ -8,13 +8,16 @@ import re
 import subprocess
 import sys
 import tempfile
+import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlsplit
 from xml.etree.ElementTree import ParseError
 from zoneinfo import ZoneInfo
 
-from brokers import danbolig_listings, home_listings, lokalbolig_listings
+from concurrent.futures import ThreadPoolExecutor
+from geo import LAT, LON, RADIUS_KM, SCOPE, geo_fields
+from brokers import Page, fetch, public_photo, danbolig_listings, home_listings, lokalbolig_listings
 
 
 ENDPOINT = "https://mcp.nybolig.dk/mcp"
@@ -30,7 +33,7 @@ def search_page(offset):
         "params": {
             "name": "search_properties",
             "arguments": {
-                "municipality": AREA,
+                "latitude": LAT, "longitude": LON, "radius_km": RADIUS_KM + 1,
                 "property_type": "Villa",
                 "offset": offset,
                 "limit": PAGE_SIZE,
@@ -72,7 +75,7 @@ def number(value):
 
 
 def listing(row):
-    if (row["municipality"], row["property_type"], row["status"]) != (AREA, "Villa", "ForSale"):
+    if (row["property_type"], row["status"]) != ("Villa", "ForSale"):
         raise ValueError("Unexpected location, property type or status.")
     for key in ("id", "address", "city", "postal_code"):
         if not isinstance(row[key], str) or not row[key].strip():
@@ -86,10 +89,38 @@ def listing(row):
     if not isinstance(thumbnail, str) or not thumbnail.startswith("https://nybolig.mindworking.eu/api/"):
         thumbnail = None
     return {
+        **geo_fields(row["latitude"], row["longitude"]),
         "id": row["id"], "source": "Nybolig", "address": row["address"], "postalCode": row["postal_code"],
         "city": row["city"], "price": number(row["price"]), "area": number(row["living_area"]),
-        "rooms": number(row["rooms"]), "url": url, "thumbnailUrl": thumbnail,
+        "caseNumber": row.get("case_number"), "rooms": number(row["rooms"]), "url": url, "thumbnailUrl": thumbnail,
     }
+
+
+def confirm_nybolig_link(row):
+    case = (row.pop("caseNumber", None) or "").lower()
+    if row["url"] or not re.fullmatch(r"n[0-9]{12,14}", case):
+        return row
+    street = row["address"].split(",")[0].strip()
+    road = re.sub(r"\s+\d+.*$", "", street).lower().translate(str.maketrans({"æ":"ae", "ø":"oe", "å":"aa"}))
+    road = unicodedata.normalize("NFKD", road).encode("ascii", "ignore").decode()
+    slug = re.sub(r"[^a-z0-9]+", "-", road).strip("-")
+    candidate = f"https://www.nybolig.dk/villa/{row['postalCode']}/{slug}/{case[:7]}/{case}"
+    try:
+        page = Page(fetch(candidate))
+        match = next((b["mainEntity"] for b in page.blocks if isinstance(b, dict)
+                      and b.get("@type") == "RealEstateListing" and b.get("mainEntity", {}).get("additionalType") == "Villa"), {})
+        address = match.get("address", {})
+        canonical = page.meta.get("og:url", "")
+        parts = urlsplit(canonical)
+        if (parts.scheme == "https" and parts.netloc == "www.nybolig.dk"
+                and parts.path.startswith("/villa/") and parts.path.rstrip("/").endswith("/" + case)
+                and str(address.get("postalCode")) == row["postalCode"]
+                and address.get("streetAddress", "").strip().casefold() == street.casefold()):
+            row["url"] = canonical
+            row["thumbnailUrl"] = row["thumbnailUrl"] or public_photo(page, "nybolig.mindworking.eu")
+    except (ValueError, KeyError, TypeError, subprocess.SubprocessError):
+        pass  # Keep the valid feed record, but never publish an unverified fallback URL.
+    return row
 
 
 def current_listings():
@@ -110,7 +141,8 @@ def current_listings():
         rows.extend(listing(row) for row in items)
     if len({item["id"] for item in rows}) != len(rows):
         raise ValueError("Duplicated listing IDs.")
-    return rows
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        return list(pool.map(confirm_nybolig_link, (row for row in rows if row["distanceKm"] <= RADIUS_KM)))
 
 
 SOURCES = {"Nybolig": current_listings, "home": home_listings,
@@ -134,7 +166,8 @@ def build_snapshot(previous, now, sources=None):
     old_rows = previous.get("listings", [])
     prior_sources = previous.get("sources", {})
     if previous:
-        if previous.get("municipality") != AREA or previous.get("schemaVersion") not in (1, 2):
+        if previous.get("schemaVersion") not in (1, 2, 3) or (
+                previous["schemaVersion"] < 3 and previous.get("municipality") != AREA):
             raise ValueError("Unexpected previous snapshot.")
         if previous["schemaVersion"] == 1:
             if previous["source"] != "Nybolig":
@@ -149,10 +182,12 @@ def build_snapshot(previous, now, sources=None):
     source_info = {}
     rows = []
     success = 0
-    for name, fetch_rows in sources.items():
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        pending = {name: pool.submit(fn) for name, fn in sources.items()}
+    for name, future in pending.items():
         prior = prior_sources.get(name, {})
         try:
-            fresh = fetch_rows()
+            fresh = future.result()
             if not fresh or len({r["id"] for r in fresh}) != len(fresh):
                 raise ValueError("Empty or duplicated source results.")
             for row in fresh:
@@ -160,7 +195,7 @@ def build_snapshot(previous, now, sources=None):
                 old = old_by_id.get(row["id"])
                 known = old or old_by_address.get(address_key(row))
                 row["firstSeen"] = known["firstSeen"] if known else today
-                row["isBaseline"] = known["isBaseline"] if known else not prior.get("updatedAt")
+                row["isBaseline"] = known["isBaseline"] if known else previous.get("scope") != SCOPE or not prior.get("updatedAt")
                 change = old["priceChange"] if old else None
                 if old and old["price"] != row["price"]:
                     start = change["previous"] if change and change["date"] == today else old["price"]
@@ -175,12 +210,17 @@ def build_snapshot(previous, now, sources=None):
             rows.extend(saved)
             source_info[name] = {"updatedAt": prior.get("updatedAt"), "status": "delayed", "count": len(saved)}
             print(f"::warning::{name}: {exc}. Retained {len(saved)} previous listings.", file=sys.stderr)
+    if previous.get("scope") != SCOPE and success < len(sources):
+        raise ValueError("All brokers must complete the first refresh for the new radius.")
     if not success:
         raise ValueError("All sources failed; retaining the publicly available snapshot.")
+    for name, info in source_info.items():
+        info["pendingLinks"] = sum(not row["url"] for row in rows if row["source"] == name)
+        info["count"] -= info["pendingLinks"]
     for row in rows:
         row["addressKey"] = address_key(row)
     return {
-        "schemaVersion": 2, "municipality": AREA, "sources": source_info, "updatedAt": stamp,
+        "schemaVersion": 3, "scope": SCOPE, "sources": source_info, "updatedAt": stamp,
         "baselineDate": previous.get("baselineDate", today),
         "listings": sorted(rows, key=lambda row: (row["address"], row["id"])),
     }

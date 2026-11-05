@@ -20,13 +20,20 @@ concurrency:
 jobs:
   opdater:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      - name: Genbrug kontrollerede placeringer uden for søgeområdet
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/bolig-geo
+          key: bolig-geo-${{ hashFiles('scripts/geo.py') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: bolig-geo-${{ hashFiles('scripts/geo.py') }}-
       - name: Hent sidste offentliggjorte overblik
         env:
+          BOLIG_GEO_CACHE: ${{ runner.temp }}/bolig-geo
           FIRST_PUBLISH: ${{ inputs.first_publish }}
           PUBLISHED_URL: https://jacobagger-lab.github.io/michaels-boligblik/boliger.json
         run: |

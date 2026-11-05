@@ -142,3 +142,5 @@ input { min-height: 46px; border: 1px solid #aeb9ac; border-radius: 8px; padding
 #source-list small { display: block; color: var(--muted); }
 .photo-link { position: absolute; inset: 0; z-index: 1; }
 .photo-link:focus-visible { outline-offset: -4px; }
+
+#more { margin: 24px auto; min-height: 44px; border-radius: 999px; font-weight: 600; }
