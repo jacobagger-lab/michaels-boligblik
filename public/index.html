@@ -7,8 +7,8 @@
   <meta name="description" content="Michaels daglige overblik over villaer fra flere mæglere inden for 20 km fra Hillerød centrum.">
   <title>Michaels boligblik · Hillerød</title>
   <link rel="preconnect" href="https://nybolig.mindworking.eu">
-  <link rel="stylesheet" href="./styles.css?v=lokale9">
-  <script src="./app.js?v=lokale9" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=prisinterval1">
+  <script src="./app.js?v=prisinterval1" defer></script>
 </head>
 <body>
   <svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -34,7 +34,6 @@
       <nav id="views" class="views" aria-label="Vælg boligoversigt">
         <button type="button" data-view="all" aria-pressed="true">Alle <span>–</span></button>
         <button type="button" data-view="new" aria-pressed="false">Nye<span class="sr-only"> siden i går</span> <span>–</span></button>
-        <button type="button" data-view="drop" aria-pressed="false">Prisfald<span class="sr-only"> på 7 dage</span> <span>–</span></button>
       </nav>
       <button class="filter-open" id="filter-open" type="button" aria-haspopup="dialog"><svg class="icon" aria-hidden="true"><use href="#i-filter"/></svg><span class="filter-label">Filtre</span></button>
     </div>
@@ -48,7 +47,7 @@
       <noscript><p>Aktivér JavaScript for at se boligerne og bruge filtrene.</p></noscript>
     </section>
   </main>
-  <footer class="wrap">Boligoplysninger og fotos kommer fra mægleren på hvert boligkort. Planlagt opdatering hver morgen kl. 06.17 dansk tid. Hvis en kilde mangler, prøver vi igen kl. 07.17. Nye fund og prisfald registreres ved sammenligning af de daglige opslag.</footer>
+  <footer class="wrap">Boligoplysninger og fotos kommer fra mægleren på hvert boligkort. Planlagt opdatering hver morgen kl. 06.17 dansk tid. Hvis en kilde mangler, prøver vi igen kl. 07.17. Under »Nye« ser du de villaer, vi har fundet siden i går.</footer>
 
   <dialog id="coverage" class="filter-sheet" aria-labelledby="coverage-title">
     <div class="sheet-head"><h2 id="coverage-title">Mæglerdækning</h2><button type="button" class="icon-button" data-close aria-label="Luk mæglerdækning"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
@@ -59,7 +58,10 @@
     <div class="sheet-head"><h2 id="filter-title">Søgefiltre</h2><button class="icon-button" type="button" data-close aria-label="Luk filtre"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
     <form id="filters">
       <div class="fields">
-        <label>Maks. pris i kroner<input type="number" name="priceMax" min="1" step="1" inputmode="numeric" placeholder="Alle priser"></label>
+        <div class="price-range">
+          <label>Min. pris i kroner<input type="number" name="priceMin" min="1" step="1" inputmode="numeric" placeholder="Ingen nedre grænse"></label>
+          <label>Maks. pris i kroner<input type="number" name="priceMax" min="1" step="1" inputmode="numeric" placeholder="Ingen øvre grænse"></label>
+        </div>
         <label>Mindst m²<input type="number" name="areaMin" min="1" step="1" inputmode="numeric" placeholder="Alle størrelser"></label>
         <label>Mindst antal værelser<input type="number" name="numberOfRoomsMin" min="1" step="1" inputmode="numeric" placeholder="Alle antal"></label>
       </div>
@@ -77,7 +79,7 @@
       </div>
       <div class="card-body">
         <p class="town"></p><h3></h3><p class="specs"></p>
-        <div class="card-foot"><div><strong class="price"></strong><small class="drop" hidden></small></div><a class="listing-link">Se annonce <span aria-hidden="true">↗</span></a></div>
+        <div class="card-foot"><strong class="price"></strong><a class="listing-link">Se annonce <span aria-hidden="true">↗</span></a></div>
       </div>
     </article>
   </template>

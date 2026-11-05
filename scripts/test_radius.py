@@ -37,7 +37,8 @@ class RadiusRefresh(unittest.TestCase):
         following = build_snapshot(migrated, now + timedelta(days=1),
                                    {"A":lambda:[house("1"),house("2",4250000),house("3")]})
         rows = following["listings"]
-        self.assertEqual(rows[1]["priceChange"]["previous"], 4500000)
+        self.assertEqual(rows[1]["price"], 4250000)
+        self.assertTrue(rows[1]["isBaseline"])
         self.assertFalse(rows[2]["isBaseline"])
         self.assertEqual(rows[2]["firstSeen"], "2026-11-06")
 

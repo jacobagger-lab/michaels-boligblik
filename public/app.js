@@ -1,9 +1,9 @@
 'use strict';
 
 const criteriaForm = document.querySelector('#filters');
-const criteriaKeys = ['priceMax', 'areaMin', 'numberOfRoomsMin'];
+const criteriaKeys = ['priceMin', 'priceMax', 'areaMin', 'numberOfRoomsMin'];
 const storageKey = 'boligblik.filters.v1';
-const viewNames = {all: 'Alle villaer', new: 'Nye siden i går', drop: 'Prisfald på 7 dage'};
+const viewNames = {all: 'Alle villaer', new: 'Nye siden i går'};
 const currency = new Intl.NumberFormat('da-DK', {maximumFractionDigits: 0});
 const updatedFormat = new Intl.DateTimeFormat('da-DK', {
   timeZone: 'Europe/Copenhagen', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
@@ -27,27 +27,27 @@ function isRecentNew(home, today) {
   return !home.isBaseline && home.firstSeen >= dayOffset(today, -1) && home.firstSeen <= today;
 }
 
-function isRecentDrop(home, today) {
-  const change = home.priceChange;
-  return change && change.date >= dayOffset(today, -6) && change.date <= today &&
-    home.price !== null && change.previous > home.price;
-}
-
 function meetsCriteria(home) {
-  return (!criteria.priceMax || (home.price !== null && home.price <= criteria.priceMax)) &&
+  const {priceMin, priceMax} = criteria;
+  const inBudget = (!priceMin && !priceMax) || (Number.isFinite(home.price) &&
+    (!priceMin || home.price >= priceMin) && (!priceMax || home.price <= priceMax));
+  return inBudget &&
     (!criteria.areaMin || home.area >= criteria.areaMin) &&
     (!criteria.numberOfRoomsMin || home.rooms >= criteria.numberOfRoomsMin);
 }
 
 function displayFilterSummary() {
   const labels = [];
-  if (criteria.priceMax) labels.push('maks. ' + currency.format(criteria.priceMax) + ' kr.');
+  if (criteria.priceMin && criteria.priceMax) {
+    labels.push(currency.format(criteria.priceMin) + '–' + currency.format(criteria.priceMax) + ' kr.');
+  } else if (criteria.priceMin) labels.push('min. ' + currency.format(criteria.priceMin) + ' kr.');
+  else if (criteria.priceMax) labels.push('maks. ' + currency.format(criteria.priceMax) + ' kr.');
   if (criteria.areaMin) labels.push('min. ' + criteria.areaMin + ' m²');
   if (criteria.numberOfRoomsMin) labels.push('min. ' + criteria.numberOfRoomsMin + ' vær.');
   const summary = document.querySelector('#filter-summary');
   summary.hidden = !labels.length;
   summary.textContent = labels.join(' · ');
-  document.querySelector('.filter-label').textContent = labels.length ? 'Filtre (' + labels.length + ')' : 'Filtre';
+  document.querySelector('.filter-label').textContent = labels.length ? 'Filtre (' + Object.keys(criteria).length + ')' : 'Filtre';
 }
 
 function saveCriteria() {
@@ -223,11 +223,6 @@ function renderHome(home, today, index) {
     chip.hidden = false;
     chip.textContent = home.firstSeen === today ? 'Først set i dag' : 'Først set i går';
   }
-  if (isRecentDrop(home, today)) {
-    const drop = card.querySelector('.drop');
-    drop.hidden = false;
-    drop.textContent = 'Nedsat ' + currency.format(home.priceChange.previous - home.price) + ' kr.';
-  }
   const anchor = card.querySelector('.listing-link');
   const href = sourceLink(home.url, home.source);
   if (href) {
@@ -247,18 +242,13 @@ function render(append = false) {
   const today = dayFormat.format(new Date());
   const all = data.listings.filter(meetsCriteria);
   const fresh = all.filter(home => isRecentNew(home, today));
-  const drops = all.filter(home => isRecentDrop(home, today));
-  const lists = {all, new:fresh, drop:drops};
+  const lists = {all, new:fresh};
   for (const button of document.querySelectorAll('#views button')) {
     button.setAttribute('aria-pressed', String(button.dataset.view === view));
     button.querySelector('span:last-child').textContent = lists[button.dataset.view].length;
   }
   const results = lists[view];
   results.sort((a, b) => {
-    if (view === 'drop') {
-      const byDate = b.priceChange.date.localeCompare(a.priceChange.date);
-      if (byDate) return byDate;
-    }
     const byFirstSeen = b.firstSeen.localeCompare(a.firstSeen);
     return Number(a.isBaseline) - Number(b.isBaseline) || byFirstSeen || a.distanceKm - b.distanceKm || a.address.localeCompare(b.address, 'da', {numeric:true});
   });
@@ -275,7 +265,6 @@ function render(append = false) {
   const empty = document.querySelector('#empty');
   empty.hidden = results.length > 0;
   if (view === 'new') empty.textContent = 'Ingen nye fund blandt dine match siden i går.';
-  else if (view === 'drop') empty.textContent = 'Ingen registrerede prisfald blandt dine match de seneste syv dage.';
   else empty.textContent = all.length === 0 && Object.keys(criteria).length
     ? 'Ingen villaer matcher dine søgekriterier. Prøv at justere dem ovenfor.'
     : 'Ingen af de tilknyttede mæglere har aktive villaer i den seneste opdatering.';
@@ -284,7 +273,7 @@ function render(append = false) {
   baseline.hidden = !isFirstDay;
   if (isFirstDay) {
     const date = dateLabelFormat.format(new Date(data.baselineDate + 'T12:00:00Z'));
-    baseline.textContent = 'Første optælling ' + date + '. Ændringer vises fra næste opdatering.';
+    baseline.textContent = 'Første optælling ' + date + '. Nye fund vises fra næste opdatering.';
   }
 }
 
@@ -356,8 +345,15 @@ viewer.addEventListener('close', () => {
   openPhoto = null;
   viewerPhoto.removeAttribute('src');
 });
+function validatePriceRange() {
+  const {priceMin, priceMax} = criteriaForm.elements;
+  priceMax.setCustomValidity(priceMin.valueAsNumber > priceMax.valueAsNumber
+    ? 'Maksimumsprisen skal være mindst lige så høj som minimumsprisen.' : '');
+}
+criteriaForm.addEventListener('input', validatePriceRange);
 document.querySelector('#filter-open').addEventListener('click', () => {
   for (const key of criteriaKeys) criteriaForm.elements[key].value = criteria[key] || '';
+  validatePriceRange();
   filterPanel.showModal();
 });
 const coverage = document.querySelector('#coverage');
@@ -372,12 +368,15 @@ filterPanel.addEventListener('click', event => {
 });
 criteriaForm.addEventListener('submit', event => {
   event.preventDefault();
+  validatePriceRange();
+  if (!criteriaForm.reportValidity()) return;
   saveCriteria();
   filterPanel.close();
 });
 criteriaForm.addEventListener('reset', event => {
   event.preventDefault();
   for (const key of criteriaKeys) criteriaForm.elements[key].value = '';
+  validatePriceRange();
   saveCriteria();
   filterPanel.close();
 });

@@ -193,16 +193,9 @@ def build_snapshot(previous, now, sources=None):
                 raise ValueError("Empty or duplicated source results.")
             for row in fresh:
                 row["source"] = name
-                old = old_by_id.get(row["id"])
-                known = old or old_by_address.get(address_key(row))
+                known = old_by_id.get(row["id"]) or old_by_address.get(address_key(row))
                 row["firstSeen"] = known["firstSeen"] if known else today
                 row["isBaseline"] = known["isBaseline"] if known else previous.get("scope") != SCOPE or not prior.get("updatedAt")
-                change = old["priceChange"] if old else None
-                if old and old["price"] != row["price"]:
-                    start = change["previous"] if change and change["date"] == today else old["price"]
-                    change = ({"date": today, "previous": start}
-                              if start is not None and row["price"] is not None and row["price"] != start else None)
-                row["priceChange"] = change
             rows.extend(fresh)
             source_info[name] = {"updatedAt": stamp, "status": "ok", "count": len(fresh)}
             success += 1
@@ -219,6 +212,7 @@ def build_snapshot(previous, now, sources=None):
         info["pendingLinks"] = sum(not row["url"] for row in rows if row["source"] == name)
         info["count"] -= info["pendingLinks"]
     for row in rows:
+        row.pop("priceChange", None)  # Older snapshots retained for a delayed broker.
         row["addressKey"] = address_key(row)
     return {
         "schemaVersion": 3, "scope": SCOPE, "sources": source_info, "updatedAt": stamp,

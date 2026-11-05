@@ -74,7 +74,6 @@ h3 { font-size: clamp(1.65rem, 3vw, 2.15rem); line-height: 1.12; letter-spacing:
 .price { font-size: 1.12rem; font-weight: 700; letter-spacing: -.035em; }
 .listing-link { min-height: 44px; gap: 5px; color: var(--forest); font-size: .86rem; font-weight: 630; text-underline-offset: 4px; }
 .link-pending { color: var(--muted); font-size: .8rem; }
-.drop { display: block; font-size: .82rem; color: #39643d; }
 .note { margin-top: 18px; }
 .empty, .warning { padding: 18px; background: #eff1e8; border-radius: 10px; }
 .warning { margin: 0 0 12px; background: #faeed6; }
@@ -85,6 +84,8 @@ dialog::backdrop { background: rgb(15 29 24 / 65%); }
 .sheet-head h2 { font: 400 2rem/1.1 var(--serif); letter-spacing: -.05em; }
 .icon-button { width: 44px; height: 44px; border: 1px solid var(--line); background: transparent; color: inherit; }
 .fields { display: grid; gap: 14px; margin: 20px 0 12px; }
+.price-range { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.price-range input { width: 100%; min-width: 0; }
 .fields label { display: grid; gap: 5px; font-size: .9rem; font-weight: 600; }
 input { min-height: 46px; border: 1px solid #aeb9ac; border-radius: 8px; padding: 9px 12px; background: white; color: var(--ink); font-size: 16px; }
 .actions { margin-top: 18px; gap: 10px; }
@@ -127,6 +128,7 @@ input { min-height: 46px; border: 1px solid #aeb9ac; border-radius: 8px; padding
   .filter-sheet { margin: auto 0 0; width: 100%; max-width: none; padding: 18px 18px max(18px, env(safe-area-inset-bottom)); border-radius: 20px 20px 0 0; }
 }
 @media (max-width: 350px) {
+  .price-range { grid-template-columns: 1fr; }
   .wrap { width: calc(100% - 24px); }
   .views button { padding-inline: 7px; }
 }
