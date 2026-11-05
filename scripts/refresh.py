@@ -77,10 +77,13 @@ def listing(row):
         parts = urlsplit(url)
         if parts.scheme != "https" or parts.netloc not in ("nybolig.dk", "www.nybolig.dk") or not parts.path.startswith("/villa/"):
             raise ValueError("Unexpected listing URL.")
+    thumbnail = row.get("thumbnail_url")
+    if not isinstance(thumbnail, str) or not thumbnail.startswith("https://nybolig.mindworking.eu/api/"):
+        thumbnail = None
     return {
         "id": row["id"], "address": row["address"], "postalCode": row["postal_code"],
         "city": row["city"], "price": number(row["price"]), "area": number(row["living_area"]),
-        "rooms": number(row["rooms"]), "url": url,
+        "rooms": number(row["rooms"]), "url": url, "thumbnailUrl": thumbnail,
     }
 
 

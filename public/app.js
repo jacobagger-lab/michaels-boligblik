@@ -78,8 +78,18 @@ function sourceLink(value) {
   return null;
 }
 
-function renderHome(home, today) {
+function renderHome(home, today, index) {
   const card = document.querySelector('#home').content.cloneNode(true);
+  if (home.thumbnailUrl?.startsWith('https://nybolig.mindworking.eu/api/')) {
+    const photo = card.querySelector('.photo');
+    const image = new Image();
+    image.alt = 'Annoncefoto fra Nybolig af ' + home.address;
+    image.loading = index < 2 ? 'eager' : 'lazy';
+    if (index === 0) image.fetchPriority = 'high';
+    image.addEventListener('error', () => image.remove(), {once:true});
+    image.src = home.thumbnailUrl;
+    photo.append(image);
+  }
   const town = [home.postalCode, home.city].filter(Boolean).join(' ');
   card.querySelector('.town').textContent = town;
   const suffix = ', ' + town;
@@ -135,7 +145,7 @@ function render() {
   document.querySelector('#count').textContent = results.length + (results.length === 1 ? ' bolig' : ' boliger');
   const list = document.querySelector('#list');
   const cards = document.createDocumentFragment();
-  for (const home of results) cards.append(renderHome(home, today));
+  results.forEach((home, index) => cards.append(renderHome(home, today, index)));
   list.replaceChildren(cards);
   const empty = document.querySelector('#empty');
   empty.hidden = results.length > 0;
