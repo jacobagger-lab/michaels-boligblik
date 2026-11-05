@@ -3,7 +3,8 @@
 const criteriaForm = document.querySelector('#filters');
 const criteriaKeys = ['priceMin', 'priceMax', 'areaMin', 'numberOfRoomsMin'];
 const storageKey = 'boligblik.filters.v1';
-const viewNames = {all: 'Alle villaer', new: 'Nye siden i går'};
+const visitKey = 'boligblik.visits.v1';
+const viewNames = {all: 'Alle villaer', new: 'Nye siden dit sidste besøg'};
 const currency = new Intl.NumberFormat('da-DK', {maximumFractionDigits: 0});
 const updatedFormat = new Intl.DateTimeFormat('da-DK', {
   timeZone: 'Europe/Copenhagen', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
@@ -11,20 +12,26 @@ const updatedFormat = new Intl.DateTimeFormat('da-DK', {
 const dayFormat = new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'Europe/Copenhagen', year: 'numeric', month: '2-digit', day: '2-digit',
 });
-const dateLabelFormat = new Intl.DateTimeFormat('da-DK', {timeZone:'UTC', day:'numeric', month:'long'});
 let data = null;
+let visit = null;
+let newAddresses = new Set();
+let loading = false;
 let view = 'all';
 const pageSize = 24;
 let shown = pageSize;
 let criteria = {};
 
-function dayOffset(day, offset) {
-  const stamp = Date.parse(day + 'T12:00:00Z') + offset * 86400000;
-  return new Date(stamp).toISOString().slice(0, 10);
-}
-
-function isRecentNew(home, today) {
-  return !home.isBaseline && home.firstSeen >= dayOffset(today, -1) && home.firstSeen <= today;
+function compareVisit(timestamp, addresses) {
+  let previous = visit;
+  try {
+    const saved = JSON.parse(localStorage.getItem(visitKey));
+    if (saved && Number.isFinite(saved.timestamp) && Array.isArray(saved.addresses) &&
+        Array.isArray(saved.added) && (!previous || saved.timestamp >= previous.timestamp)) previous = saved;
+  } catch { /* Fall back to the visit in this tab. */ }
+  // Reopening the same edition keeps its batch of new homes, even in another tab.
+  if (previous && timestamp <= previous.timestamp) return previous;
+  const known = new Set(previous?.addresses);
+  return {timestamp, addresses, added:previous ? addresses.filter(key => !known.has(key)) : [], first:!previous};
 }
 
 function meetsCriteria(home) {
@@ -201,7 +208,7 @@ function addPhoto(card, home, index) {
   card.querySelector('.photo').prepend(image);
 }
 
-function renderHome(home, today, index) {
+function renderHome(home, index) {
   const card = document.querySelector('#home').content.cloneNode(true);
   addPhoto(card, home, index);
   const town = [home.postalCode, home.city].filter(Boolean).join(' ');
@@ -218,10 +225,10 @@ function renderHome(home, today, index) {
   if (home.rooms !== null) specs.push(currency.format(home.rooms) + (home.rooms === 1 ? ' værelse' : ' værelser'));
   card.querySelector('.specs').textContent = specs.join(' · ');
   card.querySelector('.price').textContent = home.price === null ? 'Pris ikke oplyst' : currency.format(home.price) + ' kr.';
-  if (isRecentNew(home, today)) {
+  if (newAddresses.has(home.addressKey || home.id)) {
     const chip = card.querySelector('.chip');
     chip.hidden = false;
-    chip.textContent = home.firstSeen === today ? 'Først set i dag' : 'Først set i går';
+    chip.textContent = 'Ny siden sidst';
   }
   const anchor = card.querySelector('.listing-link');
   const href = sourceLink(home.url, home.source);
@@ -239,9 +246,8 @@ function renderHome(home, today, index) {
 
 function render(append = false) {
   if (!data) return;
-  const today = dayFormat.format(new Date());
   const all = data.listings.filter(meetsCriteria);
-  const fresh = all.filter(home => isRecentNew(home, today));
+  const fresh = all.filter(home => newAddresses.has(home.addressKey || home.id));
   const lists = {all, new:fresh};
   for (const button of document.querySelectorAll('#views button')) {
     button.setAttribute('aria-pressed', String(button.dataset.view === view));
@@ -257,27 +263,25 @@ function render(append = false) {
   const list = document.querySelector('#list');
   const cards = document.createDocumentFragment();
   const start = append ? list.childElementCount : 0;
-  results.slice(start, shown).forEach((home, i) => cards.append(renderHome(home, today, start + i)));
+  results.slice(start, shown).forEach((home, i) => cards.append(renderHome(home, start + i)));
   if (append) list.append(cards); else list.replaceChildren(cards);
   const more = document.querySelector('#more');
   more.hidden = shown >= results.length;
   more.textContent = 'Vis ' + Math.min(pageSize, Math.max(0, results.length - shown)) + ' flere villaer';
   const empty = document.querySelector('#empty');
   empty.hidden = results.length > 0;
-  if (view === 'new') empty.textContent = 'Ingen nye fund blandt dine match siden i går.';
+  if (view === 'new') empty.textContent = visit.first
+    ? 'Dit første besøg er udgangspunktet. Under Alle kan du se villaerne, der er til salg nu.'
+    : (Object.keys(criteria).length ? 'Ingen nye villaer matcher dine filtre siden dit sidste besøg.'
+      : 'Ingen nye villaer siden dit sidste besøg.');
   else empty.textContent = all.length === 0 && Object.keys(criteria).length
     ? 'Ingen villaer matcher dine søgekriterier. Prøv at justere dem ovenfor.'
     : 'Ingen af de tilknyttede mæglere har aktive villaer i den seneste opdatering.';
-  const baseline = document.querySelector('#baseline');
-  const isFirstDay = data.baselineDate === dayFormat.format(new Date(data.updatedAt));
-  baseline.hidden = !isFirstDay;
-  if (isFirstDay) {
-    const date = dateLabelFormat.format(new Date(data.baselineDate + 'T12:00:00Z'));
-    baseline.textContent = 'Første optælling ' + date + '. Nye fund vises fra næste opdatering.';
-  }
 }
 
 async function load() {
+  if (loading || document.visibilityState !== 'visible') return;
+  loading = true;
   try {
     const response = await fetch('./boliger.json?format=radius12', {cache:'no-store'});
     if (!response.ok) throw Error('Fetch failed');
@@ -285,6 +289,11 @@ async function load() {
     const timestamp = Date.parse(result.updatedAt);
     if (result.schemaVersion !== 3 || result.scope?.radiusKm !== 12 || !Array.isArray(result.listings) || !Number.isFinite(timestamp)) {
       throw Error('Data unavailable');
+    }
+    if (document.visibilityState !== 'visible') return;
+    if (data && timestamp <= Date.parse(data.updatedAt)) {
+      document.querySelector('#freshness').textContent = 'Opdateret ' + updatedFormat.format(new Date(data.updatedAt));
+      return;
     }
     const sources = result.sources || {Nybolig:{status:'ok', count:result.listings.length, updatedAt:result.updatedAt}};
     const delayed = [];
@@ -313,11 +322,16 @@ async function load() {
       const other = unique.get(key);
       if (!other || rank(row) > rank(other)) unique.set(key, row);
     }
+    const nextVisit = compareVisit(timestamp, [...unique.keys()]);
+    if (nextVisit.timestamp > timestamp) throw Error('Stale edition');
+    visit = nextVisit;
+    newAddresses = new Set(visit.added);
     data = {...result, listings:[...unique.values()]};
     document.querySelector('#freshness').textContent = 'Opdateret ' + updatedFormat.format(new Date(timestamp));
     const now = new Date();
     const localTime = new Intl.DateTimeFormat('en-GB', {timeZone:'Europe/Copenhagen', hour:'2-digit', minute:'2-digit', hourCycle:'h23'}).format(now);
     const previousDay = dayFormat.format(new Date(timestamp)) < dayFormat.format(now);
+    document.querySelector('#warning').hidden = true;
     if ((previousDay && localTime >= '07:45') || Date.now() - timestamp > 30 * 3600000) {
       const warning = document.querySelector('#warning');
       warning.hidden = false;
@@ -329,12 +343,24 @@ async function load() {
       warning.textContent = 'Seneste hentning fra ' + delayed.join(', ') + ' er forsinket. Se tidspunktet under mæglerkilder.';
     }
     render();
+    try {
+      localStorage.setItem(visitKey, JSON.stringify(visit));
+      document.querySelector('#visit-storage').hidden = true;
+    } catch {
+      document.querySelector('#visit-storage').hidden = false;
+    }
   } catch {
+    if (data) {
+      document.querySelector('#freshness').textContent = 'Viser senest indlæste liste · ' + updatedFormat.format(new Date(data.updatedAt));
+      return;
+    }
     document.querySelector('#freshness').textContent = 'Boligdata kunne ikke indlæses.';
     document.querySelector('#list').replaceChildren();
     const empty = document.querySelector('#empty');
     empty.hidden = false;
     empty.textContent = 'Prøv at genindlæse siden om lidt.';
+  } finally {
+    loading = false;
   }
 }
 zoomButton.addEventListener('click', () => setZoom(!viewerStage.classList.contains('zoomed')));
@@ -389,4 +415,6 @@ for (const button of document.querySelectorAll('#views button')) {
 }
 document.querySelector('#more').addEventListener('click', () => { shown += pageSize; render(true); });
 restoreCriteria();
+document.addEventListener('visibilitychange', load);
+window.addEventListener('pageshow', event => { if (event.persisted) load(); });
 load();

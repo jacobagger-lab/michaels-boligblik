@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#183e34">
-  <meta name="description" content="Se villaer til salg inden for 12 km fra Hillerød, og find dem, der er kommet til siden i går.">
+  <meta name="description" content="Se villaer til salg inden for 12 km fra Hillerød, og find dem, der er kommet til siden dit sidste besøg.">
   <meta property="og:locale" content="da_DK">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://jacobagger-lab.github.io/michaels-boligblik/">
   <meta property="og:title" content="Michaels boligblik · Villaer nær Hillerød">
-  <meta property="og:description" content="Se villaer til salg inden for 12 km fra Hillerød, og find dem, der er kommet til siden i går.">
+  <meta property="og:description" content="Se villaer til salg inden for 12 km fra Hillerød, og find dem, der er kommet til siden dit sidste besøg.">
   <meta property="og:image" content="https://jacobagger-lab.github.io/michaels-boligblik/boligblik-villa.png">
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
@@ -19,7 +19,7 @@
   <title>Michaels boligblik · Hillerød</title>
   <link rel="preconnect" href="https://nybolig.mindworking.eu">
   <link rel="stylesheet" href="./styles.css?v=prisinterval1">
-  <script src="./app.js?v=radius12" defer></script>
+  <script src="./app.js?v=besoeg1" defer></script>
 </head>
 <body>
   <svg class="symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -44,7 +44,7 @@
     <div class="toolbar">
       <nav id="views" class="views" aria-label="Vælg boligoversigt">
         <button type="button" data-view="all" aria-pressed="true">Alle <span>–</span></button>
-        <button type="button" data-view="new" aria-pressed="false">Nye<span class="sr-only"> siden i går</span> <span>–</span></button>
+        <button type="button" data-view="new" aria-pressed="false">Nye<span class="sr-only"> siden dit sidste besøg</span> <span>–</span></button>
       </nav>
       <button class="filter-open" id="filter-open" type="button" aria-haspopup="dialog"><svg class="icon" aria-hidden="true"><use href="#i-filter"/></svg><span class="filter-label">Filtre</span></button>
     </div>
@@ -54,11 +54,11 @@
       <div id="list" class="grid"></div>
       <button id="more" class="filter-open" type="button" hidden>Vis flere villaer</button>
       <p id="empty" class="empty" role="status" hidden></p>
-      <p id="baseline" class="note" hidden></p>
+      <p id="visit-storage" class="note" hidden>Browseren kan kun huske dette besøg, mens fanen er åben. Tillad lokal lagring for at se nye villaer mellem besøg.</p>
       <noscript><p>Aktivér JavaScript for at se boligerne og bruge filtrene.</p></noscript>
     </section>
   </main>
-  <footer class="wrap">Boligoplysninger og fotos kommer fra mægleren på hvert boligkort. Planlagt opdatering hver morgen kl. 06.17 dansk tid. Hvis en kilde mangler, prøver vi igen kl. 07.17. Under »Nye« ser du de villaer, vi har fundet siden i går.</footer>
+  <footer class="wrap">Boligoplysninger og fotos kommer fra mægleren på hvert boligkort. Planlagt opdatering hver morgen kl. 06.17 dansk tid. Hvis en kilde mangler, prøver vi igen kl. 07.17. »Nye« viser villaer, der er kommet til siden dit sidste besøg i denne browser. Første besøg er udgangspunktet.</footer>
 
   <dialog id="coverage" class="filter-sheet" aria-labelledby="coverage-title">
     <div class="sheet-head"><h2 id="coverage-title">Mæglerdækning</h2><button type="button" class="icon-button" data-close aria-label="Luk mæglerdækning"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div>
