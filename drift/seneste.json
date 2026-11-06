@@ -1,52 +1,52 @@
 {
-  "checkedAt": "2026-11-05T23:37:05Z",
+  "checkedAt": "2026-11-06T08:59:46Z",
   "radiusKm": 12,
-  "uniqueLinkedHomes": 252,
+  "uniqueLinkedHomes": 251,
   "sources": {
     "Nybolig": {
       "status": "ok",
-      "count": 53,
-      "updatedAt": "2026-11-05T23:37:05Z"
+      "count": 55,
+      "updatedAt": "2026-11-06T08:59:46Z"
     },
     "home": {
       "status": "ok",
-      "count": 57,
-      "updatedAt": "2026-11-05T23:37:05Z"
+      "count": 55,
+      "updatedAt": "2026-11-06T08:59:46Z"
     },
     "danbolig": {
       "status": "ok",
-      "count": 40,
-      "updatedAt": "2026-11-05T23:37:05Z"
+      "count": 39,
+      "updatedAt": "2026-11-06T08:59:46Z"
     },
     "LokalBolig": {
       "status": "ok",
       "count": 44,
-      "updatedAt": "2026-11-05T23:37:05Z"
+      "updatedAt": "2026-11-06T08:59:46Z"
     },
     "Estate": {
       "status": "ok",
       "count": 29,
-      "updatedAt": "2026-11-05T23:37:05Z"
+      "updatedAt": "2026-11-06T08:59:46Z"
     },
     "Nordkystmæglerne": {
       "status": "ok",
       "count": 0,
-      "updatedAt": "2026-11-05T23:37:05Z"
+      "updatedAt": "2026-11-06T08:59:46Z"
     },
     "Ivan Eltoft Nielsen": {
       "status": "ok",
       "count": 17,
-      "updatedAt": "2026-11-05T23:37:05Z"
+      "updatedAt": "2026-11-06T08:59:46Z"
     },
     "&LIVING": {
       "status": "ok",
       "count": 9,
-      "updatedAt": "2026-11-05T23:37:05Z"
+      "updatedAt": "2026-11-06T08:59:46Z"
     },
     "LILIENHOFF": {
       "status": "ok",
       "count": 4,
-      "updatedAt": "2026-11-05T23:37:05Z"
+      "updatedAt": "2026-11-06T08:59:46Z"
     }
   }
 }
