@@ -1,5 +1,6 @@
 """Has every source actually checked in this morning? Build the public operations receipt."""
 import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -41,6 +42,22 @@ if __name__ == "__main__":
     data = json.loads(Path(path).read_text())
     if command == "current":
         sys.exit(0 if morning_ok(data, datetime.now(CPH)) else 1)
+    if command == "verify":
+        if receipt(data) != json.loads(os.environ["RECEIPT"]):
+            sys.exit("Den offentlige boligliste svarer ikke til den udgivne opdatering.")
+        sys.exit(0)
+    if command == "audit":
+        audit = receipt(data)
+        audit["trigger"] = {
+            "event": os.environ["GITHUB_EVENT_NAME"],
+            "automatic": os.environ["AUTOMATIC"] == "true",
+            "forced": os.environ.get("FORCE_REFRESH") == "true",
+            "actor": os.environ["GITHUB_ACTOR"],
+            "runUrl": f"https://github.com/{os.environ['GITHUB_REPOSITORY']}/actions/runs/{os.environ['GITHUB_RUN_ID']}",
+            "commitSha": os.environ["GITHUB_SHA"],
+        }
+        print(json.dumps(audit, ensure_ascii=False, indent=2))
+        sys.exit(0)
     if command != "receipt":
         raise ValueError("Unexpected command")
     print(json.dumps(receipt(data), ensure_ascii=False, separators=(",", ":")))

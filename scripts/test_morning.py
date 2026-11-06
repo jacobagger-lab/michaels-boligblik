@@ -1,12 +1,17 @@
 import io
 import json
+import os
+import subprocess
+import sys
+import tempfile
 import unittest
 from contextlib import redirect_stderr
 from datetime import datetime, timedelta
+from pathlib import Path
 from unittest.mock import patch
 from extra_sources import mindworking_listings, nordkyst_listings
 from geo import SCOPE
-from morning import morning_ok, within_hours, CPH
+from morning import morning_ok, within_hours, receipt, CPH
 from refresh import build_snapshot
 
 
@@ -28,6 +33,74 @@ class Morning(unittest.TestCase):
                 data["sources"]["A"]["status"] = "delayed"
                 data["sources"]["A"]["updatedAt"] = now.isoformat()
                 self.assertFalse(morning_ok(data, now))
+
+    def test_automatic_retry_requires_every_source_fresh_and_same_scope(self):
+        now = datetime(2026, 11, 6, 7, 17, tzinfo=CPH)
+        fresh = {"status": "ok", "updatedAt": now.replace(hour=6).isoformat()}
+        current = {"scope": dict(SCOPE), "sources": {"A": dict(fresh), "B": dict(fresh)}}
+        with patch("morning.SOURCES", {"A": None, "B": None}):
+            self.assertTrue(morning_ok(current, now))
+            for source in (
+                {"status": "ok", "updatedAt": now.replace(hour=0).isoformat()},
+                {"status": "ok", "updatedAt": (now + timedelta(minutes=1)).isoformat()},
+                {"status": "delayed", "updatedAt": fresh["updatedAt"]},
+                {"status": "ok", "updatedAt": None},
+            ):
+                with self.subTest(source=source):
+                    changed = {**current, "sources": {"A": dict(fresh), "B": source}}
+                    self.assertFalse(morning_ok(changed, now))
+            self.assertFalse(morning_ok({**current, "sources": {"A": dict(fresh)}}, now))
+            self.assertFalse(morning_ok({**current, "scope": {**SCOPE, "radiusKm": 20}}, now))
+
+    def test_publication_verification_rejects_previous_or_incomplete_edition(self):
+        stamp = "2026-11-06T05:17:00Z"
+        published = {
+            "scope": dict(SCOPE), "updatedAt": stamp,
+            "sources": {"A": {"status": "ok", "count": 1, "updatedAt": stamp}},
+            "listings": [{"addressKey": "3400|byvej 1|", "url": "https://example.com/1"}],
+        }
+        expected = receipt(published)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory, "published.json")
+            command = [sys.executable, str(Path(__file__).with_name("morning.py")), "verify", str(path)]
+            env = {**os.environ, "RECEIPT": json.dumps(expected)}
+            path.write_text(json.dumps(published))
+            self.assertEqual(subprocess.run(command, env=env, capture_output=True).returncode, 0)
+            for changed in (
+                {**published, "updatedAt": "2026-11-05T23:37:00Z"},
+                {**published, "listings": []},
+                {**published, "sources": {}},
+            ):
+                path.write_text(json.dumps(changed))
+                with self.subTest(changed=changed):
+                    result = subprocess.run(command, env=env, capture_output=True, text=True)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("offentlige boligliste", result.stderr)
+
+    def test_audit_identifies_automatic_dispatch_without_changing_source_receipt(self):
+        stamp = "2026-11-06T05:17:00Z"
+        published = {
+            "scope": dict(SCOPE), "updatedAt": stamp,
+            "sources": {"A": {"status": "ok", "count": 0, "updatedAt": stamp}},
+            "listings": [],
+        }
+        env = {
+            **os.environ, "GITHUB_EVENT_NAME": "workflow_dispatch", "AUTOMATIC": "true",
+            "FORCE_REFRESH": "false", "GITHUB_ACTOR": "timer-owner",
+            "GITHUB_REPOSITORY": "owner/boligblik", "GITHUB_RUN_ID": "12345", "GITHUB_SHA": "abc123",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory, "published.json")
+            path.write_text(json.dumps(published))
+            command = [sys.executable, str(Path(__file__).with_name("morning.py")), "audit", str(path)]
+            result = subprocess.run(command, env=env, capture_output=True, text=True, check=True)
+        audit = json.loads(result.stdout)
+        trigger = audit.pop("trigger")
+        self.assertEqual(audit, receipt(published))
+        self.assertEqual(trigger, {
+            "event": "workflow_dispatch", "automatic": True, "forced": False, "actor": "timer-owner",
+            "runUrl": "https://github.com/owner/boligblik/actions/runs/12345", "commitSha": "abc123",
+        })
 
     def test_new_broker_failure_and_recovery(self):
         now = datetime(2026,11,5,6,17,tzinfo=CPH)
