@@ -10,6 +10,10 @@ from refresh import SOURCES
 CPH = ZoneInfo("Europe/Copenhagen")
 
 
+def within_hours(now):
+    return 6 <= now.astimezone(CPH).hour < 22
+
+
 def morning_ok(data, now):
     floor = now.astimezone(CPH).replace(hour=6, minute=0, second=0, microsecond=0)
     if data.get("scope") != SCOPE or set(data.get("sources", {})) != set(SOURCES):
@@ -31,6 +35,8 @@ def receipt(data):
 
 
 if __name__ == "__main__":
+    if sys.argv[1] == "within-hours":
+        sys.exit(0 if within_hours(datetime.now(CPH)) else 1)
     command, path = sys.argv[1:]
     data = json.loads(Path(path).read_text())
     if command == "current":

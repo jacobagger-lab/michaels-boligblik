@@ -6,11 +6,17 @@ from datetime import datetime, timedelta
 from unittest.mock import patch
 from extra_sources import mindworking_listings, nordkyst_listings
 from geo import SCOPE
-from morning import morning_ok, CPH
+from morning import morning_ok, within_hours, CPH
 from refresh import build_snapshot
 
 
 class Morning(unittest.TestCase):
+    def test_retry_window_in_summer_and_winter(self):
+        for month in (1, 7):
+            for hour in (5, 6, 7, 21, 22):
+                now = datetime(2026, month, 6, hour, 17, tzinfo=CPH)
+                self.assertEqual(within_hours(now), 6 <= hour < 22)
+
     def test_today_at_six_even_when_clocks_change(self):
         for month, day in [(3, 29), (10, 25)]:
             now = datetime(2026, month, day, 7, 17, tzinfo=CPH)

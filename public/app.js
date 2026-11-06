@@ -10,6 +10,7 @@ const currency = new Intl.NumberFormat('da-DK', {maximumFractionDigits: 0});
 const updatedFormat = new Intl.DateTimeFormat('da-DK', {
   timeZone: 'Europe/Copenhagen', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
 });
+const clockFormat = new Intl.DateTimeFormat('en-GB', {timeZone:'Europe/Copenhagen', hour:'2-digit', minute:'2-digit', hourCycle:'h23'});
 const dayFormat = new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'Europe/Copenhagen', year: 'numeric', month: '2-digit', day: '2-digit',
 });
@@ -302,6 +303,30 @@ function render(append = false) {
     : 'Ingen af de tilknyttede mæglere har aktive villaer i den seneste opdatering.';
 }
 
+function showFreshness(snapshot) {
+  const timestamp = Date.parse(snapshot.updatedAt);
+  const now = new Date();
+  const today = dayFormat.format(now);
+  const sources = Object.entries(snapshot.sources || {});
+  const missingMorning = clockFormat.format(now) >= '07:45' && sources.some(([, source]) => {
+    const checked = new Date(source.updatedAt);
+    return !Number.isFinite(checked.getTime()) || dayFormat.format(checked) !== today ||
+      clockFormat.format(checked) < '06:00';
+  });
+  const messages = [];
+  if (missingMorning || now.getTime() - timestamp > 30 * 3600000) {
+    messages.push('Morgenopdateringen er forsinket. Listen viser senest hentede boliger og priser.');
+  }
+  const delayed = sources.filter(([, source]) => source.status === 'delayed').map(([name]) => name);
+  if (delayed.length) {
+    messages.push('Seneste hentning fra ' + delayed.join(', ') + ' er forsinket. Se tidspunktet under mæglerkilder.');
+  }
+  document.querySelector('#freshness').textContent = 'Opdateret ' + updatedFormat.format(new Date(timestamp));
+  const warning = document.querySelector('#warning');
+  warning.hidden = !messages.length;
+  warning.textContent = messages.join(' ');
+}
+
 async function load() {
   if (loading || document.visibilityState !== 'visible') return;
   loading = true;
@@ -315,11 +340,10 @@ async function load() {
     }
     if (document.visibilityState !== 'visible') return;
     if (data && timestamp <= Date.parse(data.updatedAt)) {
-      document.querySelector('#freshness').textContent = 'Opdateret ' + updatedFormat.format(new Date(data.updatedAt));
+      showFreshness(data);
       return;
     }
     const sources = result.sources || {Nybolig:{status:'ok', count:result.listings.length, updatedAt:result.updatedAt}};
-    const delayed = [];
     const list = document.querySelector('#source-list');
     list.replaceChildren();
     for (const [name, info] of Object.entries(sources)) {
@@ -329,7 +353,6 @@ async function load() {
       time.textContent = info.updatedAt ? 'Hentet ' + updatedFormat.format(new Date(info.updatedAt)) : 'Afventer første opdatering';
       if (info.pendingLinks) time.textContent += ' · ' + info.pendingLinks + ' uden direkte link er udeladt';
       if (info.status === 'delayed') {
-        delayed.push(name);
         time.textContent += ' · Forsinket';
       }
       li.append(time);
@@ -350,21 +373,7 @@ async function load() {
     visit = nextVisit;
     newAddresses = new Set(visit.added);
     data = {...result, listings:[...unique.values()]};
-    document.querySelector('#freshness').textContent = 'Opdateret ' + updatedFormat.format(new Date(timestamp));
-    const now = new Date();
-    const localTime = new Intl.DateTimeFormat('en-GB', {timeZone:'Europe/Copenhagen', hour:'2-digit', minute:'2-digit', hourCycle:'h23'}).format(now);
-    const previousDay = dayFormat.format(new Date(timestamp)) < dayFormat.format(now);
-    document.querySelector('#warning').hidden = true;
-    if ((previousDay && localTime >= '07:45') || Date.now() - timestamp > 30 * 3600000) {
-      const warning = document.querySelector('#warning');
-      warning.hidden = false;
-      warning.textContent = 'Opdateringen er forsinket. Listen viser senest hentede boliger og priser.';
-    }
-    if (delayed.length) {
-      const warning = document.querySelector('#warning');
-      warning.hidden = false;
-      warning.textContent = 'Seneste hentning fra ' + delayed.join(', ') + ' er forsinket. Se tidspunktet under mæglerkilder.';
-    }
+    showFreshness(data);
     render();
     try {
       localStorage.setItem(visitKey, JSON.stringify(visit));

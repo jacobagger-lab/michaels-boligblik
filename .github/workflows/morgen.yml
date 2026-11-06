@@ -1,10 +1,10 @@
 name: Michaels morgenoverblik
 on:
   schedule:
-    - cron: '17 6 * * *'
-      timezone: Europe/Copenhagen
-    - cron: '17 7 * * *'
-      timezone: Europe/Copenhagen
+    # UTC covers Danish summer and winter time; morning.py checks local hours.
+    - cron: '17 4-20 * * *'
+    # Temporary verification of the scheduler, removed after an automatic run.
+    - cron: '*/5 * * * *'
   workflow_dispatch:
     inputs:
       first_publish:
@@ -37,6 +37,9 @@ jobs:
           FIRST_PUBLISH: ${{ inputs.first_publish }}
           PUBLISHED_URL: https://jacobagger-lab.github.io/michaels-boligblik/boliger.json
         run: |
+          if [[ "$EVENT" == schedule ]] && ! python3 scripts/morning.py within-hours; then
+            echo "Uden for dansk opdateringstid"; echo "publish=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
           status=$(curl -sSL --retry 3 --retry-all-errors --max-time 30 \
             --output "$RUNNER_TEMP/previous.json" --write-out '%{http_code}' \
             "$PUBLISHED_URL?run=$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT")
@@ -107,8 +110,8 @@ jobs:
             git -c user.name='Michaels boligblik' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m "Opdatér driftstal for Michaels boligblik"
             git push origin HEAD:main
           fi
-      - name: Markér en ufuldstændig reservekørsel
-        if: github.event.schedule == '17 7 * * *'
+      - name: Markér forsinkede kilder til næste automatiske forsøg
+        if: github.event_name == 'schedule'
         env:
           RECEIPT: ${{ needs.opdater.outputs.receipt }}
         run: |
@@ -116,5 +119,5 @@ jobs:
           import json,os,sys
           failed = [name for name, info in json.loads(os.environ["RECEIPT"])["sources"].items() if info["status"] != "ok"]
           if failed:
-              sys.exit("Forsinkede mæglere efter andet forsøg: " + ", ".join(failed))
+              sys.exit("Forsinkede mæglere; nyt forsøg næste time: " + ", ".join(failed))
           PYTHON
