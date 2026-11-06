@@ -3,8 +3,6 @@ on:
   schedule:
     # UTC covers Danish summer and winter time; morning.py checks local hours.
     - cron: '17 4-20 * * *'
-    # Temporary verification of the scheduler, removed after an automatic run.
-    - cron: '*/5 * * * *'
   workflow_dispatch:
     inputs:
       first_publish:
