@@ -1,52 +1,52 @@
 {
-  "checkedAt": "2026-11-07T05:17:20Z",
+  "checkedAt": "2026-11-08T05:17:18Z",
   "radiusKm": 12,
   "uniqueLinkedHomes": 251,
   "sources": {
     "Nybolig": {
       "status": "ok",
       "count": 56,
-      "updatedAt": "2026-11-07T05:17:20Z"
+      "updatedAt": "2026-11-08T05:17:18Z"
     },
     "home": {
       "status": "ok",
       "count": 54,
-      "updatedAt": "2026-11-07T05:17:20Z"
+      "updatedAt": "2026-11-08T05:17:18Z"
     },
     "danbolig": {
       "status": "ok",
       "count": 39,
-      "updatedAt": "2026-11-07T05:17:20Z"
+      "updatedAt": "2026-11-08T05:17:18Z"
     },
     "LokalBolig": {
       "status": "ok",
       "count": 44,
-      "updatedAt": "2026-11-07T05:17:20Z"
+      "updatedAt": "2026-11-08T05:17:18Z"
     },
     "Estate": {
       "status": "ok",
       "count": 30,
-      "updatedAt": "2026-11-07T05:17:20Z"
+      "updatedAt": "2026-11-08T05:17:18Z"
     },
     "Nordkystmæglerne": {
       "status": "ok",
       "count": 0,
-      "updatedAt": "2026-11-07T05:17:20Z"
+      "updatedAt": "2026-11-08T05:17:18Z"
     },
     "Ivan Eltoft Nielsen": {
       "status": "ok",
       "count": 17,
-      "updatedAt": "2026-11-07T05:17:20Z"
+      "updatedAt": "2026-11-08T05:17:18Z"
     },
     "&LIVING": {
       "status": "ok",
       "count": 9,
-      "updatedAt": "2026-11-07T05:17:20Z"
+      "updatedAt": "2026-11-08T05:17:18Z"
     },
     "LILIENHOFF": {
       "status": "ok",
       "count": 4,
-      "updatedAt": "2026-11-07T05:17:20Z"
+      "updatedAt": "2026-11-08T05:17:18Z"
     }
   },
   "trigger": {
@@ -54,7 +54,7 @@
     "automatic": true,
     "forced": false,
     "actor": "jacobagger-lab",
-    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/42342069679",
-    "commitSha": "31bebaca9b55a6ed982b6aecf86dc5d253d9473b"
+    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/42450166430",
+    "commitSha": "afa41f199fc278a7d3c500833a7ac3d8f81ba86a"
   }
 }
