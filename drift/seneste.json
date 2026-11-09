@@ -1,52 +1,52 @@
 {
-  "checkedAt": "2026-11-08T05:17:18Z",
+  "checkedAt": "2026-11-09T05:17:20Z",
   "radiusKm": 12,
-  "uniqueLinkedHomes": 251,
+  "uniqueLinkedHomes": 252,
   "sources": {
     "Nybolig": {
       "status": "ok",
       "count": 56,
-      "updatedAt": "2026-11-08T05:17:18Z"
+      "updatedAt": "2026-11-09T05:17:20Z"
     },
     "home": {
       "status": "ok",
-      "count": 54,
-      "updatedAt": "2026-11-08T05:17:18Z"
+      "count": 55,
+      "updatedAt": "2026-11-09T05:17:20Z"
     },
     "danbolig": {
       "status": "ok",
       "count": 39,
-      "updatedAt": "2026-11-08T05:17:18Z"
+      "updatedAt": "2026-11-09T05:17:20Z"
     },
     "LokalBolig": {
       "status": "ok",
       "count": 44,
-      "updatedAt": "2026-11-08T05:17:18Z"
+      "updatedAt": "2026-11-09T05:17:20Z"
     },
     "Estate": {
       "status": "ok",
       "count": 30,
-      "updatedAt": "2026-11-08T05:17:18Z"
+      "updatedAt": "2026-11-09T05:17:20Z"
     },
     "Nordkystmæglerne": {
       "status": "ok",
       "count": 0,
-      "updatedAt": "2026-11-08T05:17:18Z"
+      "updatedAt": "2026-11-09T05:17:20Z"
     },
     "Ivan Eltoft Nielsen": {
       "status": "ok",
       "count": 17,
-      "updatedAt": "2026-11-08T05:17:18Z"
+      "updatedAt": "2026-11-09T05:17:20Z"
     },
     "&LIVING": {
       "status": "ok",
       "count": 9,
-      "updatedAt": "2026-11-08T05:17:18Z"
+      "updatedAt": "2026-11-09T05:17:20Z"
     },
     "LILIENHOFF": {
       "status": "ok",
       "count": 4,
-      "updatedAt": "2026-11-08T05:17:18Z"
+      "updatedAt": "2026-11-09T05:17:20Z"
     }
   },
   "trigger": {
@@ -54,7 +54,7 @@
     "automatic": true,
     "forced": false,
     "actor": "jacobagger-lab",
-    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/42450166430",
-    "commitSha": "afa41f199fc278a7d3c500833a7ac3d8f81ba86a"
+    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/42566410233",
+    "commitSha": "74f520097cecae862fc65866106d4874a70297fe"
   }
 }
