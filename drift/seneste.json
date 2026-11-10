@@ -1,52 +1,52 @@
 {
-  "checkedAt": "2026-11-09T05:17:20Z",
+  "checkedAt": "2026-11-10T05:17:22Z",
   "radiusKm": 12,
-  "uniqueLinkedHomes": 252,
+  "uniqueLinkedHomes": 258,
   "sources": {
     "Nybolig": {
       "status": "ok",
       "count": 56,
-      "updatedAt": "2026-11-09T05:17:20Z"
+      "updatedAt": "2026-11-10T05:17:22Z"
     },
     "home": {
       "status": "ok",
-      "count": 55,
-      "updatedAt": "2026-11-09T05:17:20Z"
+      "count": 54,
+      "updatedAt": "2026-11-10T05:17:22Z"
     },
     "danbolig": {
       "status": "ok",
-      "count": 39,
-      "updatedAt": "2026-11-09T05:17:20Z"
+      "count": 42,
+      "updatedAt": "2026-11-10T05:17:22Z"
     },
     "LokalBolig": {
       "status": "ok",
-      "count": 44,
-      "updatedAt": "2026-11-09T05:17:20Z"
+      "count": 45,
+      "updatedAt": "2026-11-10T05:17:22Z"
     },
     "Estate": {
       "status": "ok",
-      "count": 30,
-      "updatedAt": "2026-11-09T05:17:20Z"
+      "count": 32,
+      "updatedAt": "2026-11-10T05:17:22Z"
     },
     "Nordkystmæglerne": {
       "status": "ok",
       "count": 0,
-      "updatedAt": "2026-11-09T05:17:20Z"
+      "updatedAt": "2026-11-10T05:17:22Z"
     },
     "Ivan Eltoft Nielsen": {
       "status": "ok",
       "count": 17,
-      "updatedAt": "2026-11-09T05:17:20Z"
+      "updatedAt": "2026-11-10T05:17:22Z"
     },
     "&LIVING": {
       "status": "ok",
-      "count": 9,
-      "updatedAt": "2026-11-09T05:17:20Z"
+      "count": 10,
+      "updatedAt": "2026-11-10T05:17:22Z"
     },
     "LILIENHOFF": {
       "status": "ok",
-      "count": 4,
-      "updatedAt": "2026-11-09T05:17:20Z"
+      "count": 5,
+      "updatedAt": "2026-11-10T05:17:22Z"
     }
   },
   "trigger": {
@@ -54,7 +54,7 @@
     "automatic": true,
     "forced": false,
     "actor": "jacobagger-lab",
-    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/42566410233",
-    "commitSha": "74f520097cecae862fc65866106d4874a70297fe"
+    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/42761168188",
+    "commitSha": "1aff042ec707ad8b28f9b11a2f07b70e4a7b0079"
   }
 }
