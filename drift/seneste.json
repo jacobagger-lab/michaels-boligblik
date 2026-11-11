@@ -1,52 +1,52 @@
 {
-  "checkedAt": "2026-11-10T05:17:22Z",
+  "checkedAt": "2026-11-11T05:17:18Z",
   "radiusKm": 12,
-  "uniqueLinkedHomes": 258,
+  "uniqueLinkedHomes": 240,
   "sources": {
     "Nybolig": {
       "status": "ok",
-      "count": 56,
-      "updatedAt": "2026-11-10T05:17:22Z"
+      "count": 37,
+      "updatedAt": "2026-11-11T05:17:18Z"
     },
     "home": {
       "status": "ok",
       "count": 54,
-      "updatedAt": "2026-11-10T05:17:22Z"
+      "updatedAt": "2026-11-11T05:17:18Z"
     },
     "danbolig": {
       "status": "ok",
       "count": 42,
-      "updatedAt": "2026-11-10T05:17:22Z"
+      "updatedAt": "2026-11-11T05:17:18Z"
     },
     "LokalBolig": {
       "status": "ok",
-      "count": 45,
-      "updatedAt": "2026-11-10T05:17:22Z"
+      "count": 44,
+      "updatedAt": "2026-11-11T05:17:18Z"
     },
     "Estate": {
       "status": "ok",
       "count": 32,
-      "updatedAt": "2026-11-10T05:17:22Z"
+      "updatedAt": "2026-11-11T05:17:18Z"
     },
     "Nordkystmæglerne": {
       "status": "ok",
       "count": 0,
-      "updatedAt": "2026-11-10T05:17:22Z"
+      "updatedAt": "2026-11-11T05:17:18Z"
     },
     "Ivan Eltoft Nielsen": {
       "status": "ok",
       "count": 17,
-      "updatedAt": "2026-11-10T05:17:22Z"
+      "updatedAt": "2026-11-11T05:17:18Z"
     },
     "&LIVING": {
       "status": "ok",
       "count": 10,
-      "updatedAt": "2026-11-10T05:17:22Z"
+      "updatedAt": "2026-11-11T05:17:18Z"
     },
     "LILIENHOFF": {
       "status": "ok",
       "count": 5,
-      "updatedAt": "2026-11-10T05:17:22Z"
+      "updatedAt": "2026-11-11T05:17:18Z"
     }
   },
   "trigger": {
@@ -54,7 +54,7 @@
     "automatic": true,
     "forced": false,
     "actor": "jacobagger-lab",
-    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/42761168188",
-    "commitSha": "1aff042ec707ad8b28f9b11a2f07b70e4a7b0079"
+    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/42964757152",
+    "commitSha": "15ed6a65938171920e3d6f306389cf76dbef07c8"
   }
 }
