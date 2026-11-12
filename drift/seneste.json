@@ -1,52 +1,52 @@
 {
-  "checkedAt": "2026-11-11T05:17:18Z",
+  "checkedAt": "2026-11-12T05:17:19Z",
   "radiusKm": 12,
-  "uniqueLinkedHomes": 240,
+  "uniqueLinkedHomes": 242,
   "sources": {
     "Nybolig": {
       "status": "ok",
       "count": 37,
-      "updatedAt": "2026-11-11T05:17:18Z"
+      "updatedAt": "2026-11-12T05:17:19Z"
     },
     "home": {
       "status": "ok",
-      "count": 54,
-      "updatedAt": "2026-11-11T05:17:18Z"
+      "count": 55,
+      "updatedAt": "2026-11-12T05:17:19Z"
     },
     "danbolig": {
       "status": "ok",
-      "count": 42,
-      "updatedAt": "2026-11-11T05:17:18Z"
+      "count": 43,
+      "updatedAt": "2026-11-12T05:17:19Z"
     },
     "LokalBolig": {
       "status": "ok",
       "count": 44,
-      "updatedAt": "2026-11-11T05:17:18Z"
+      "updatedAt": "2026-11-12T05:17:19Z"
     },
     "Estate": {
       "status": "ok",
       "count": 32,
-      "updatedAt": "2026-11-11T05:17:18Z"
+      "updatedAt": "2026-11-12T05:17:19Z"
     },
     "Nordkystmæglerne": {
       "status": "ok",
       "count": 0,
-      "updatedAt": "2026-11-11T05:17:18Z"
+      "updatedAt": "2026-11-12T05:17:19Z"
     },
     "Ivan Eltoft Nielsen": {
       "status": "ok",
       "count": 17,
-      "updatedAt": "2026-11-11T05:17:18Z"
+      "updatedAt": "2026-11-12T05:17:19Z"
     },
     "&LIVING": {
       "status": "ok",
       "count": 10,
-      "updatedAt": "2026-11-11T05:17:18Z"
+      "updatedAt": "2026-11-12T05:17:19Z"
     },
     "LILIENHOFF": {
       "status": "ok",
       "count": 5,
-      "updatedAt": "2026-11-11T05:17:18Z"
+      "updatedAt": "2026-11-12T05:17:19Z"
     }
   },
   "trigger": {
@@ -54,7 +54,7 @@
     "automatic": true,
     "forced": false,
     "actor": "jacobagger-lab",
-    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/42964757152",
-    "commitSha": "15ed6a65938171920e3d6f306389cf76dbef07c8"
+    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/43160358921",
+    "commitSha": "9ecefd945c5aa2bc3804afbdde9ab061c2cbf798"
   }
 }
