@@ -1,52 +1,52 @@
 {
-  "checkedAt": "2026-11-13T05:17:20Z",
+  "checkedAt": "2026-11-14T05:17:21Z",
   "radiusKm": 12,
-  "uniqueLinkedHomes": 241,
+  "uniqueLinkedHomes": 240,
   "sources": {
     "Nybolig": {
       "status": "ok",
-      "count": 37,
-      "updatedAt": "2026-11-13T05:17:20Z"
+      "count": 38,
+      "updatedAt": "2026-11-14T05:17:21Z"
     },
     "home": {
       "status": "ok",
-      "count": 53,
-      "updatedAt": "2026-11-13T05:17:20Z"
+      "count": 52,
+      "updatedAt": "2026-11-14T05:17:21Z"
     },
     "danbolig": {
       "status": "ok",
-      "count": 43,
-      "updatedAt": "2026-11-13T05:17:20Z"
+      "count": 41,
+      "updatedAt": "2026-11-14T05:17:21Z"
     },
     "LokalBolig": {
       "status": "ok",
-      "count": 45,
-      "updatedAt": "2026-11-13T05:17:20Z"
+      "count": 46,
+      "updatedAt": "2026-11-14T05:17:21Z"
     },
     "Estate": {
       "status": "ok",
       "count": 32,
-      "updatedAt": "2026-11-13T05:17:20Z"
+      "updatedAt": "2026-11-14T05:17:21Z"
     },
     "Nordkystmæglerne": {
       "status": "ok",
       "count": 0,
-      "updatedAt": "2026-11-13T05:17:20Z"
+      "updatedAt": "2026-11-14T05:17:21Z"
     },
     "Ivan Eltoft Nielsen": {
       "status": "ok",
       "count": 17,
-      "updatedAt": "2026-11-13T05:17:20Z"
+      "updatedAt": "2026-11-14T05:17:21Z"
     },
     "&LIVING": {
       "status": "ok",
       "count": 10,
-      "updatedAt": "2026-11-13T05:17:20Z"
+      "updatedAt": "2026-11-14T05:17:21Z"
     },
     "LILIENHOFF": {
       "status": "ok",
       "count": 5,
-      "updatedAt": "2026-11-13T05:17:20Z"
+      "updatedAt": "2026-11-14T05:17:21Z"
     }
   },
   "trigger": {
@@ -54,7 +54,7 @@
     "automatic": true,
     "forced": false,
     "actor": "jacobagger-lab",
-    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/43371023161",
-    "commitSha": "67180fb83a5fc4545c6383d959200ae8bf7e1218"
+    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/43560786409",
+    "commitSha": "155db01f1c50b8cd01fc3bb1aba44034df4a6e05"
   }
 }
