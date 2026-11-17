@@ -1,52 +1,52 @@
 {
-  "checkedAt": "2026-11-16T05:17:25Z",
+  "checkedAt": "2026-11-17T05:17:20Z",
   "radiusKm": 12,
-  "uniqueLinkedHomes": 240,
+  "uniqueLinkedHomes": 241,
   "sources": {
     "Nybolig": {
       "status": "ok",
       "count": 38,
-      "updatedAt": "2026-11-16T05:17:25Z"
+      "updatedAt": "2026-11-17T05:17:20Z"
     },
     "home": {
       "status": "ok",
-      "count": 52,
-      "updatedAt": "2026-11-16T05:17:25Z"
+      "count": 53,
+      "updatedAt": "2026-11-17T05:17:20Z"
     },
     "danbolig": {
       "status": "ok",
       "count": 41,
-      "updatedAt": "2026-11-16T05:17:25Z"
+      "updatedAt": "2026-11-17T05:17:20Z"
     },
     "LokalBolig": {
       "status": "ok",
-      "count": 46,
-      "updatedAt": "2026-11-16T05:17:25Z"
+      "count": 47,
+      "updatedAt": "2026-11-17T05:17:20Z"
     },
     "Estate": {
       "status": "ok",
-      "count": 32,
-      "updatedAt": "2026-11-16T05:17:25Z"
+      "count": 31,
+      "updatedAt": "2026-11-17T05:17:20Z"
     },
     "Nordkystmæglerne": {
       "status": "ok",
       "count": 0,
-      "updatedAt": "2026-11-16T05:17:25Z"
+      "updatedAt": "2026-11-17T05:17:20Z"
     },
     "Ivan Eltoft Nielsen": {
       "status": "ok",
       "count": 17,
-      "updatedAt": "2026-11-16T05:17:25Z"
+      "updatedAt": "2026-11-17T05:17:20Z"
     },
     "&LIVING": {
       "status": "ok",
       "count": 10,
-      "updatedAt": "2026-11-16T05:17:25Z"
+      "updatedAt": "2026-11-17T05:17:20Z"
     },
     "LILIENHOFF": {
       "status": "ok",
       "count": 5,
-      "updatedAt": "2026-11-16T05:17:25Z"
+      "updatedAt": "2026-11-17T05:17:20Z"
     }
   },
   "trigger": {
@@ -54,7 +54,7 @@
     "automatic": true,
     "forced": false,
     "actor": "jacobagger-lab",
-    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/43809229572",
-    "commitSha": "9be84c6db13c6d84fc5a8d0efd43ad057cfff93f"
+    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/44023031904",
+    "commitSha": "d5cdef375e41bc34efa6049555315c59b8e91f85"
   }
 }
