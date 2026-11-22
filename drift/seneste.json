@@ -1,52 +1,52 @@
 {
-  "checkedAt": "2026-11-21T05:17:19Z",
+  "checkedAt": "2026-11-22T05:17:18Z",
   "radiusKm": 12,
-  "uniqueLinkedHomes": 240,
+  "uniqueLinkedHomes": 241,
   "sources": {
     "Nybolig": {
       "status": "ok",
       "count": 39,
-      "updatedAt": "2026-11-21T05:17:19Z"
+      "updatedAt": "2026-11-22T05:17:18Z"
     },
     "home": {
       "status": "ok",
       "count": 52,
-      "updatedAt": "2026-11-21T05:17:19Z"
+      "updatedAt": "2026-11-22T05:17:18Z"
     },
     "danbolig": {
       "status": "ok",
-      "count": 41,
-      "updatedAt": "2026-11-21T05:17:19Z"
+      "count": 42,
+      "updatedAt": "2026-11-22T05:17:18Z"
     },
     "LokalBolig": {
       "status": "ok",
       "count": 47,
-      "updatedAt": "2026-11-21T05:17:19Z"
+      "updatedAt": "2026-11-22T05:17:18Z"
     },
     "Estate": {
       "status": "ok",
       "count": 31,
-      "updatedAt": "2026-11-21T05:17:19Z"
+      "updatedAt": "2026-11-22T05:17:18Z"
     },
     "Nordkystmæglerne": {
       "status": "ok",
       "count": 0,
-      "updatedAt": "2026-11-21T05:17:19Z"
+      "updatedAt": "2026-11-22T05:17:18Z"
     },
     "Ivan Eltoft Nielsen": {
       "status": "ok",
       "count": 16,
-      "updatedAt": "2026-11-21T05:17:19Z"
+      "updatedAt": "2026-11-22T05:17:18Z"
     },
     "&LIVING": {
       "status": "ok",
       "count": 10,
-      "updatedAt": "2026-11-21T05:17:19Z"
+      "updatedAt": "2026-11-22T05:17:18Z"
     },
     "LILIENHOFF": {
       "status": "ok",
       "count": 5,
-      "updatedAt": "2026-11-21T05:17:19Z"
+      "updatedAt": "2026-11-22T05:17:18Z"
     }
   },
   "trigger": {
@@ -54,7 +54,7 @@
     "automatic": true,
     "forced": false,
     "actor": "jacobagger-lab",
-    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/44870167384",
-    "commitSha": "69353cfddcbfb969bad2409b73751ff65beab6f7"
+    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/44988740781",
+    "commitSha": "4f2af234fd6dba3a112e02cced2c2ef42808e418"
   }
 }
