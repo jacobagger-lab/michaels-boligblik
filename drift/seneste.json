@@ -1,52 +1,52 @@
 {
-  "checkedAt": "2026-11-25T05:17:21Z",
+  "checkedAt": "2026-11-26T05:17:19Z",
   "radiusKm": 12,
-  "uniqueLinkedHomes": 242,
+  "uniqueLinkedHomes": 243,
   "sources": {
     "Nybolig": {
       "status": "ok",
-      "count": 39,
-      "updatedAt": "2026-11-25T05:17:21Z"
+      "count": 40,
+      "updatedAt": "2026-11-26T05:17:19Z"
     },
     "home": {
       "status": "ok",
       "count": 55,
-      "updatedAt": "2026-11-25T05:17:21Z"
+      "updatedAt": "2026-11-26T05:17:19Z"
     },
     "danbolig": {
       "status": "ok",
       "count": 41,
-      "updatedAt": "2026-11-25T05:17:21Z"
+      "updatedAt": "2026-11-26T05:17:19Z"
     },
     "LokalBolig": {
       "status": "ok",
       "count": 46,
-      "updatedAt": "2026-11-25T05:17:21Z"
+      "updatedAt": "2026-11-26T05:17:19Z"
     },
     "Estate": {
       "status": "ok",
       "count": 31,
-      "updatedAt": "2026-11-25T05:17:21Z"
+      "updatedAt": "2026-11-26T05:17:19Z"
     },
     "Nordkystmæglerne": {
       "status": "ok",
       "count": 0,
-      "updatedAt": "2026-11-25T05:17:21Z"
+      "updatedAt": "2026-11-26T05:17:19Z"
     },
     "Ivan Eltoft Nielsen": {
       "status": "ok",
       "count": 16,
-      "updatedAt": "2026-11-25T05:17:21Z"
+      "updatedAt": "2026-11-26T05:17:19Z"
     },
     "&LIVING": {
       "status": "ok",
       "count": 10,
-      "updatedAt": "2026-11-25T05:17:21Z"
+      "updatedAt": "2026-11-26T05:17:19Z"
     },
     "LILIENHOFF": {
       "status": "ok",
       "count": 5,
-      "updatedAt": "2026-11-25T05:17:21Z"
+      "updatedAt": "2026-11-26T05:17:19Z"
     }
   },
   "trigger": {
@@ -54,7 +54,7 @@
     "automatic": true,
     "forced": false,
     "actor": "jacobagger-lab",
-    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/45552506963",
-    "commitSha": "f593514cdaf46e629ebe30dfe11b32fc533b4ec7"
+    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/45760589949",
+    "commitSha": "afad027f1d4fc24dec9e3cd22554a691c492750c"
   }
 }
