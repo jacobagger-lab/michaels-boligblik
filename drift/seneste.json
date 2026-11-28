@@ -1,52 +1,52 @@
 {
-  "checkedAt": "2026-11-27T05:17:20Z",
+  "checkedAt": "2026-11-28T05:17:20Z",
   "radiusKm": 12,
-  "uniqueLinkedHomes": 245,
+  "uniqueLinkedHomes": 242,
   "sources": {
     "Nybolig": {
       "status": "ok",
-      "count": 40,
-      "updatedAt": "2026-11-27T05:17:20Z"
+      "count": 39,
+      "updatedAt": "2026-11-28T05:17:20Z"
     },
     "home": {
       "status": "ok",
       "count": 56,
-      "updatedAt": "2026-11-27T05:17:20Z"
+      "updatedAt": "2026-11-28T05:17:20Z"
     },
     "danbolig": {
       "status": "ok",
       "count": 41,
-      "updatedAt": "2026-11-27T05:17:20Z"
+      "updatedAt": "2026-11-28T05:17:20Z"
     },
     "LokalBolig": {
       "status": "ok",
-      "count": 47,
-      "updatedAt": "2026-11-27T05:17:20Z"
+      "count": 46,
+      "updatedAt": "2026-11-28T05:17:20Z"
     },
     "Estate": {
       "status": "ok",
       "count": 31,
-      "updatedAt": "2026-11-27T05:17:20Z"
+      "updatedAt": "2026-11-28T05:17:20Z"
     },
     "Nordkystmæglerne": {
       "status": "ok",
       "count": 0,
-      "updatedAt": "2026-11-27T05:17:20Z"
+      "updatedAt": "2026-11-28T05:17:20Z"
     },
     "Ivan Eltoft Nielsen": {
       "status": "ok",
       "count": 16,
-      "updatedAt": "2026-11-27T05:17:20Z"
+      "updatedAt": "2026-11-28T05:17:20Z"
     },
     "&LIVING": {
       "status": "ok",
-      "count": 10,
-      "updatedAt": "2026-11-27T05:17:20Z"
+      "count": 9,
+      "updatedAt": "2026-11-28T05:17:20Z"
     },
     "LILIENHOFF": {
       "status": "ok",
       "count": 5,
-      "updatedAt": "2026-11-27T05:17:20Z"
+      "updatedAt": "2026-11-28T05:17:20Z"
     }
   },
   "trigger": {
@@ -54,7 +54,7 @@
     "automatic": true,
     "forced": false,
     "actor": "jacobagger-lab",
-    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/45944892699",
-    "commitSha": "64c34638c7211883f5499b655fecac361329ae95"
+    "runUrl": "https://github.com/jacobagger-lab/michaels-boligblik/actions/runs/46111406444",
+    "commitSha": "3a46608d0946d8e1863e3efdd99a4d785dce3a6d"
   }
 }
